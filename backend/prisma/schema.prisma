@@ -1,0 +1,409 @@
+// =============================================================================
+// ACCUDEFEND - Hotel Chargeback Defense
+// Prisma Database Schema
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  STAFF
+  READONLY
+}
+
+enum ChargebackStatus {
+  PENDING
+  IN_REVIEW
+  SUBMITTED
+  WON
+  LOST
+  EXPIRED
+  CANCELLED
+}
+
+enum EvidenceType {
+  ID_SCAN
+  AUTH_SIGNATURE
+  CHECKOUT_SIGNATURE
+  FOLIO
+  RESERVATION_CONFIRMATION
+  CANCELLATION_POLICY
+  KEY_CARD_LOG
+  CCTV_FOOTAGE
+  CORRESPONDENCE
+  INCIDENT_REPORT
+  DAMAGE_PHOTOS
+  POLICE_REPORT
+  NO_SHOW_DOCUMENTATION
+  OTHER
+}
+
+enum ProviderType {
+  PAYMENT_PROCESSOR
+  PMS
+  HOSPITALITY
+}
+
+enum TimelineEventType {
+  ALERT
+  SYSTEM
+  AI
+  USER_ACTION
+  SUCCESS
+  WARNING
+  ERROR
+  WON
+  LOST
+  INFO
+}
+
+enum AIRecommendation {
+  AUTO_SUBMIT
+  REVIEW_RECOMMENDED
+  GATHER_MORE_EVIDENCE
+  UNLIKELY_TO_WIN
+}
+
+// =============================================================================
+// USER & AUTHENTICATION
+// =============================================================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  role          UserRole  @default(STAFF)
+  isActive      Boolean   @default(true) @map("is_active")
+  lastLogin     DateTime? @map("last_login")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  propertyId    String?   @map("property_id")
+  property      Property? @relation(fields: [propertyId], references: [id])
+  sessions      Session[]
+  caseNotes     CaseNote[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@map("sessions")
+}
+
+// =============================================================================
+// PROPERTY (HOTEL)
+// =============================================================================
+
+model Property {
+  id          String   @id @default(uuid())
+  name        String
+  address     String?
+  city        String?
+  state       String?
+  country     String   @default("US")
+  postalCode  String?  @map("postal_code")
+  timezone    String   @default("America/New_York")
+  currency    String   @default("USD")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users       User[]
+  chargebacks Chargeback[]
+  analytics   AnalyticsSnapshot[]
+
+  @@map("properties")
+}
+
+// =============================================================================
+// PAYMENT PROVIDER
+// =============================================================================
+
+model Provider {
+  id            String       @id @default(uuid())
+  name          String
+  type          ProviderType
+  credentials   Json?        // Encrypted provider-specific config
+  webhookSecret String?      @map("webhook_secret")
+  enabled       Boolean      @default(true)
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  chargebacks   Chargeback[]
+  webhookEvents WebhookEvent[]
+
+  @@map("providers")
+}
+
+// =============================================================================
+// CHARGEBACK (CENTRAL CASE ENTITY)
+// =============================================================================
+
+model Chargeback {
+  id                  String           @id @default(uuid())
+  caseNumber          String           @unique @map("case_number") // CB-2025-0001
+  status              ChargebackStatus @default(PENDING)
+
+  // Guest Information
+  guestName           String           @map("guest_name")
+  guestEmail          String?          @map("guest_email")
+  guestPhone          String?          @map("guest_phone")
+
+  // Financial Details
+  amount              Decimal          @db.Decimal(10, 2)
+  currency            String           @default("USD")
+  transactionId       String           @map("transaction_id")
+  cardLastFour        String?          @map("card_last_four")
+  cardBrand           String?          @map("card_brand")
+
+  // Dispute Details
+  reasonCode          String           @map("reason_code")
+  reasonDescription   String?          @map("reason_description")
+  disputeDate         DateTime         @map("dispute_date")
+  dueDate             DateTime?        @map("due_date")
+  processorDisputeId  String?          @map("processor_dispute_id")
+
+  // Stay Information
+  checkInDate         DateTime         @map("check_in_date")
+  checkOutDate        DateTime         @map("check_out_date")
+  roomNumber          String?          @map("room_number")
+  roomType            String?          @map("room_type")
+  confirmationNumber  String?          @map("confirmation_number")
+
+  // AI Analysis
+  confidenceScore     Int?             @map("confidence_score") // 0-100
+  fraudIndicators     Json?            @map("fraud_indicators")
+  recommendation      AIRecommendation?
+  aiAnalysis          Json?            @map("ai_analysis")
+
+  // Timestamps
+  createdAt           DateTime         @default(now()) @map("created_at")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  resolvedAt          DateTime?        @map("resolved_at")
+
+  // Relations
+  propertyId          String           @map("property_id")
+  property            Property         @relation(fields: [propertyId], references: [id])
+  providerId          String           @map("provider_id")
+  provider            Provider         @relation(fields: [providerId], references: [id])
+  evidence            Evidence[]
+  timeline            TimelineEvent[]
+  notes               CaseNote[]
+  submissions         DisputeSubmission[]
+
+  @@index([status])
+  @@index([propertyId])
+  @@index([providerId])
+  @@index([createdAt])
+  @@index([dueDate])
+  @@map("chargebacks")
+}
+
+// =============================================================================
+// EVIDENCE
+// =============================================================================
+
+model Evidence {
+  id            String       @id @default(uuid())
+  type          EvidenceType
+  fileName      String       @map("file_name")
+  s3Key         String       @map("s3_key")
+  mimeType      String       @map("mime_type")
+  fileSize      Int          @map("file_size") // bytes
+  description   String?
+  extractedText String?      @map("extracted_text") // OCR results
+  verified      Boolean      @default(false)
+  verifiedAt    DateTime?    @map("verified_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  chargebackId  String       @map("chargeback_id")
+  chargeback    Chargeback   @relation(fields: [chargebackId], references: [id], onDelete: Cascade)
+
+  @@index([chargebackId])
+  @@index([type])
+  @@map("evidence")
+}
+
+// =============================================================================
+// TIMELINE EVENT (AUDIT HISTORY)
+// =============================================================================
+
+model TimelineEvent {
+  id           String            @id @default(uuid())
+  eventType    TimelineEventType @map("event_type")
+  title        String
+  description  String?
+  metadata     Json?
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  // Relations
+  chargebackId String            @map("chargeback_id")
+  chargeback   Chargeback        @relation(fields: [chargebackId], references: [id], onDelete: Cascade)
+
+  @@index([chargebackId])
+  @@index([eventType])
+  @@map("timeline_events")
+}
+
+// =============================================================================
+// CASE NOTE
+// =============================================================================
+
+model CaseNote {
+  id           String     @id @default(uuid())
+  content      String
+  isInternal   Boolean    @default(true) @map("is_internal")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  chargebackId String     @map("chargeback_id")
+  chargeback   Chargeback @relation(fields: [chargebackId], references: [id], onDelete: Cascade)
+  userId       String     @map("user_id")
+  user         User       @relation(fields: [userId], references: [id])
+
+  @@index([chargebackId])
+  @@map("case_notes")
+}
+
+// =============================================================================
+// DISPUTE SUBMISSION
+// =============================================================================
+
+model DisputeSubmission {
+  id           String     @id @default(uuid())
+  submittedAt  DateTime   @default(now()) @map("submitted_at")
+  status       String     // pending, success, failed
+  requestJson  Json?      @map("request_json")
+  responseJson Json?      @map("response_json")
+  errorMessage String?    @map("error_message")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  // Relations
+  chargebackId String     @map("chargeback_id")
+  chargeback   Chargeback @relation(fields: [chargebackId], references: [id], onDelete: Cascade)
+
+  @@index([chargebackId])
+  @@map("dispute_submissions")
+}
+
+// =============================================================================
+// WEBHOOK EVENT
+// =============================================================================
+
+model WebhookEvent {
+  id           String   @id @default(uuid())
+  eventType    String   @map("event_type")
+  payload      Json
+  signature    String?
+  processed    Boolean  @default(false)
+  processedAt  DateTime? @map("processed_at")
+  errorMessage String?  @map("error_message")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  providerId   String   @map("provider_id")
+  provider     Provider @relation(fields: [providerId], references: [id])
+
+  @@index([providerId])
+  @@index([eventType])
+  @@index([processed])
+  @@map("webhook_events")
+}
+
+// =============================================================================
+// ANALYTICS SNAPSHOT
+// =============================================================================
+
+model AnalyticsSnapshot {
+  id            String   @id @default(uuid())
+  date          DateTime @db.Date
+  totalCases    Int      @default(0) @map("total_cases")
+  pendingCases  Int      @default(0) @map("pending_cases")
+  wonCases      Int      @default(0) @map("won_cases")
+  lostCases     Int      @default(0) @map("lost_cases")
+  totalAmount   Decimal  @default(0) @db.Decimal(12, 2) @map("total_amount")
+  recoveredAmt  Decimal  @default(0) @db.Decimal(12, 2) @map("recovered_amount")
+  winRate       Decimal? @db.Decimal(5, 2) @map("win_rate")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  propertyId    String?  @map("property_id")
+  property      Property? @relation(fields: [propertyId], references: [id])
+
+  @@unique([date, propertyId])
+  @@index([date])
+  @@map("analytics_snapshots")
+}
+
+// =============================================================================
+// AUDIT LOG
+// =============================================================================
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  action      String
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  oldValues   Json?    @map("old_values")
+  newValues   Json?    @map("new_values")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// =============================================================================
+// SYSTEM CONFIG
+// =============================================================================
+
+model SystemConfig {
+  key         String   @id
+  value       Json
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  @@map("system_config")
+}

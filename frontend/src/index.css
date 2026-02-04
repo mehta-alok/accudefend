@@ -1,0 +1,171 @@
+/**
+ * AccuDefend - Hotel Chargeback Defense System
+ * Global Styles
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-gray-900;
+  }
+}
+
+@layer components {
+  /* AccuDefend Button Styles */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-omni-600 border border-transparent rounded-lg shadow-sm hover:bg-omni-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-omni-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-omni-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors;
+  }
+
+  /* AccuDefend Card Styles */
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200;
+  }
+
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+
+  .card-body {
+    @apply px-6 py-4;
+  }
+
+  /* AccuDefend Form Styles */
+  .input {
+    @apply block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-omni-500 focus:border-omni-500;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  /* Status Badge Styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-pending {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-in-review {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-submitted {
+    @apply bg-purple-100 text-purple-800;
+  }
+
+  .badge-won {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-lost {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .badge-expired {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  .badge-cancelled {
+    @apply bg-gray-100 text-gray-600;
+  }
+
+  /* Confidence Score Styles */
+  .confidence-high {
+    @apply text-green-600 bg-green-50;
+  }
+
+  .confidence-medium {
+    @apply text-yellow-600 bg-yellow-50;
+  }
+
+  .confidence-low {
+    @apply text-red-600 bg-red-50;
+  }
+
+  /* Table Styles */
+  .table {
+    @apply min-w-full divide-y divide-gray-200;
+  }
+
+  .table th {
+    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50;
+  }
+
+  .table td {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+  }
+
+  .table tbody tr {
+    @apply hover:bg-gray-50 transition-colors;
+  }
+
+  /* Sidebar Navigation */
+  .nav-item {
+    @apply flex items-center px-4 py-2.5 text-sm font-medium rounded-lg transition-colors;
+  }
+
+  .nav-item-active {
+    @apply bg-omni-50 text-omni-700;
+  }
+
+  .nav-item-inactive {
+    @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading Spinner */
+.spinner {
+  @apply animate-spin h-5 w-5 text-omni-600;
+}

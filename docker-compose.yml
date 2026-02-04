@@ -1,0 +1,140 @@
+# =============================================================================
+# ACCUDEFEND - Hotel Chargeback Defense System
+# Docker Compose Configuration
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ===========================================================================
+  # DATABASE - PostgreSQL 16
+  # ===========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: accudefend-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: accudefend_user
+      POSTGRES_PASSWORD: accudefend_password
+      POSTGRES_DB: accudefend_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U accudefend_user -d accudefend_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - accudefend-network
+
+  # ===========================================================================
+  # CACHE - Redis 7
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: accudefend-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - accudefend-network
+
+  # ===========================================================================
+  # BACKEND API - Node.js
+  # ===========================================================================
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: accudefend-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8000
+      DATABASE_URL: postgresql://accudefend_user:accudefend_password@postgres:5432/accudefend_db?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-accudefend-super-secret-jwt-key-change-in-production}
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_EXPIRY: 7d
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-accudefend-evidence}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      FRONTEND_URL: http://localhost:3000
+      CORS_ORIGINS: http://localhost:3000,http://localhost:80
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - accudefend-network
+
+  # ===========================================================================
+  # FRONTEND - React + Nginx
+  # ===========================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: accudefend-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - accudefend-network
+
+  # ===========================================================================
+  # DATABASE MIGRATION (One-time)
+  # ===========================================================================
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: accudefend-migrate
+    environment:
+      DATABASE_URL: postgresql://accudefend_user:accudefend_password@postgres:5432/accudefend_db?schema=public
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - accudefend-network
+    restart: "no"
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  accudefend-network:
+    driver: bridge
