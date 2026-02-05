@@ -17,10 +17,11 @@
 5. [Database Schema](#5-database-schema)
 6. [API Design](#6-api-design)
 7. [AI/ML Engine](#7-aiml-engine)
-8. [Security](#8-security)
-9. [Integrations](#9-integrations)
-10. [Deployment](#10-deployment)
-11. [Appendix](#11-appendix)
+8. [Tutorial & Help System](#8-tutorial--help-system)
+9. [Security](#9-security)
+10. [Integrations](#10-integrations)
+11. [Deployment](#11-deployment)
+12. [Appendix](#12-appendix)
 
 ---
 
@@ -118,8 +119,8 @@ frontend/
 │   ├── index.css               # Global styles (Tailwind)
 │   │
 │   ├── components/
-│   │   ├── Layout.jsx          # Main layout with sidebar
-│   │   └── Tutorial.jsx        # Onboarding & help system
+│   │   ├── Layout.jsx          # Main layout with sidebar & help integration
+│   │   └── Tutorial.jsx        # Tutorial, HelpButton & HelpPanel components
 │   │
 │   ├── pages/
 │   │   ├── Login.jsx           # Authentication
@@ -553,9 +554,148 @@ const EVIDENCE_PACKETS = {
 
 ---
 
-## 8. Security
+## 8. Tutorial & Help System
 
-### 8.1 Authentication Flow
+### 8.1 Overview
+
+AccuDefend includes a comprehensive built-in tutorial and help system designed to onboard new users and provide contextual assistance throughout the application.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         TUTORIAL & HELP SYSTEM                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    USER ONBOARDING FLOW                              │   │
+│  │                                                                      │   │
+│  │   First Login ──► Tutorial Auto-Launch ──► Step-by-Step Guide       │   │
+│  │        │                                          │                  │   │
+│  │        ▼                                          ▼                  │   │
+│  │   localStorage ◄──────────────────────── Mark Complete              │   │
+│  │   (tutorial_complete)                                                │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                    HELP ACCESS METHODS                               │   │
+│  │                                                                      │   │
+│  │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │   │
+│  │   │ Help Button  │  │  Keyboard    │  │  Help Panel  │              │   │
+│  │   │ (Bottom-Right)│  │  Shortcut ?  │  │  (Sidebar)   │              │   │
+│  │   └──────────────┘  └──────────────┘  └──────────────┘              │   │
+│  │                                                                      │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 8.2 Tutorial Steps
+
+| Step | Title | Description |
+|------|-------|-------------|
+| 1 | Welcome | Introduction to AccuDefend platform |
+| 2 | Dashboard Overview | Real-time metrics and KPIs |
+| 3 | Managing Cases | Case list, filtering, and navigation |
+| 4 | Uploading Evidence | Evidence requirements and file upload |
+| 5 | AI Analysis | Confidence scores and recommendations |
+| 6 | Configuration | Admin settings and thresholds |
+| 7 | Completion | Ready to use confirmation |
+
+### 8.3 Help Panel Features
+
+```javascript
+const helpTopics = [
+  {
+    title: 'Getting Started',
+    items: [
+      { label: 'Take the Tutorial', action: onStartTutorial },
+      { label: 'Dashboard Overview', link: '/' },
+      { label: 'Managing Cases', link: '/cases' },
+      { label: 'Analytics & Reports', link: '/analytics' }
+    ]
+  },
+  {
+    title: 'Case Management',
+    items: [
+      { label: 'Creating a New Case', info: 'Via webhooks or API' },
+      { label: 'Uploading Evidence', info: 'Evidence tab in case details' },
+      { label: 'AI Recommendations', info: 'Confidence scores explained' }
+    ]
+  },
+  {
+    title: 'Admin Settings',
+    items: [
+      { label: 'Defense Configuration', link: '/settings' },
+      { label: 'Email Notifications', link: '/settings' }
+    ]
+  },
+  {
+    title: 'Quick Tips',
+    items: [
+      { label: 'Keyboard Shortcuts', info: 'Press ? for help' },
+      { label: 'Urgent Cases', info: 'Due within 7 days' },
+      { label: 'Win Rate Calculation', info: 'Won / (Won + Lost)' }
+    ]
+  }
+];
+```
+
+### 8.4 Component Architecture
+
+```
+frontend/src/components/Tutorial.jsx
+├── Tutorial (Modal)          # Main tutorial overlay
+│   ├── tutorialSteps[]       # Step configuration
+│   ├── currentStep state     # Progress tracking
+│   └── localStorage          # Completion persistence
+│
+├── HelpButton (FAB)          # Floating action button
+│   └── Fixed bottom-right    # Always visible
+│
+└── HelpPanel (Sidebar)       # Help documentation panel
+    ├── Navigation links      # Quick page access
+    ├── Topic sections        # Organized help content
+    └── Support contact       # Email link
+```
+
+### 8.5 Integration with Layout
+
+The Tutorial system is integrated into the main Layout component:
+
+```jsx
+// Layout.jsx integration
+import { Tutorial, HelpButton, HelpPanel } from './Tutorial';
+
+// Auto-launch for first-time users
+useEffect(() => {
+  const tutorialComplete = localStorage.getItem('accudefend_tutorial_complete');
+  if (!tutorialComplete) {
+    setShowTutorial(true);
+  }
+}, []);
+
+// Keyboard shortcut (? key)
+useEffect(() => {
+  const handleKeyDown = (e) => {
+    if (e.key === '?' && !e.ctrlKey && !e.metaKey) {
+      setShowHelpPanel(true);
+    }
+  };
+  window.addEventListener('keydown', handleKeyDown);
+  return () => window.removeEventListener('keydown', handleKeyDown);
+}, []);
+```
+
+### 8.6 Persistence
+
+| Key | Storage | Purpose |
+|-----|---------|---------|
+| `accudefend_tutorial_complete` | localStorage | Tracks if user completed tutorial |
+
+---
+
+## 9. Security
+
+### 9.1 Authentication Flow
 
 ```
 ┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
@@ -582,7 +722,7 @@ const EVIDENCE_PACKETS = {
      │◄───────────────│                │                │
 ```
 
-### 8.2 Security Measures
+### 9.2 Security Measures
 
 | Layer | Protection |
 |-------|------------|
@@ -595,7 +735,7 @@ const EVIDENCE_PACKETS = {
 | Input | Zod validation schemas |
 | CORS | Whitelist origins |
 
-### 8.3 Role-Based Access Control
+### 9.3 Role-Based Access Control
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -621,9 +761,9 @@ const EVIDENCE_PACKETS = {
 
 ---
 
-## 9. Integrations
+## 10. Integrations
 
-### 9.1 Payment Processor Webhooks
+### 10.1 Payment Processor Webhooks
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -666,7 +806,7 @@ const EVIDENCE_PACKETS = {
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 9.2 Supported Providers
+### 10.2 Supported Providers
 
 | Provider | Webhook Events | Status |
 |----------|----------------|--------|
@@ -675,7 +815,7 @@ const EVIDENCE_PACKETS = {
 | Shift4 | dispute.opened, dispute.closed | ✓ Implemented |
 | Elavon | chargeback_notification | ✓ Implemented |
 
-### 9.3 Reason Code Mapping
+### 10.3 Reason Code Mapping
 
 ```javascript
 // Visa Reason Codes
@@ -697,9 +837,9 @@ const EVIDENCE_PACKETS = {
 
 ---
 
-## 10. Deployment
+## 11. Deployment
 
-### 10.1 Environment Variables
+### 11.1 Environment Variables
 
 ```bash
 # Application
@@ -735,7 +875,7 @@ BCRYPT_SALT_ROUNDS=12
 CORS_ORIGINS=https://app.accudefend.com
 ```
 
-### 10.2 Docker Deployment
+### 11.2 Docker Deployment
 
 ```yaml
 # docker-compose.yml
@@ -779,7 +919,7 @@ volumes:
   redis_data:
 ```
 
-### 10.3 Production Architecture
+### 11.3 Production Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -815,9 +955,9 @@ volumes:
 
 ---
 
-## 11. Appendix
+## 12. Appendix
 
-### 11.1 Glossary
+### 12.1 Glossary
 
 | Term | Definition |
 |------|------------|
@@ -828,7 +968,7 @@ volumes:
 | **Pre-arbitration** | Second stage of dispute if initial representment fails |
 | **Arbitration** | Final stage where card network makes binding decision |
 
-### 11.2 Reason Code Win Rates (Historical Data)
+### 12.2 Reason Code Win Rates (Historical Data)
 
 | Code | Category | Avg Win Rate |
 |------|----------|--------------|
@@ -841,7 +981,7 @@ volumes:
 | 4837 | No Cardholder Auth | 40% |
 | F29 | CNP Fraud (Amex) | 35% |
 
-### 11.3 File Structure
+### 12.3 File Structure
 
 ```
 Hotel.Chargeback.Fraud_OMNI/
@@ -870,7 +1010,7 @@ Hotel.Chargeback.Fraud_OMNI/
 └── AccuDefend_System_Design.md
 ```
 
-### 11.4 Quick Start Commands
+### 12.4 Quick Start Commands
 
 ```bash
 # Start Backend

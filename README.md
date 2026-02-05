@@ -208,6 +208,37 @@ ADYEN_HMAC_KEY=xxx
 
 ---
 
+## Tutorial & Help System
+
+AccuDefend includes a built-in **interactive tutorial** and **contextual help system** to onboard new users and provide assistance.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Interactive Tutorial** | Step-by-step walkthrough for first-time users |
+| **Help Panel** | Quick access to documentation and navigation |
+| **Keyboard Shortcut** | Press `?` anywhere to open help |
+| **Floating Help Button** | Always-visible help access in bottom-right corner |
+
+### Tutorial Steps
+
+1. **Welcome** - Introduction to AccuDefend
+2. **Dashboard Overview** - Understanding metrics and KPIs
+3. **Managing Cases** - Navigating and filtering cases
+4. **Uploading Evidence** - Adding documentation to cases
+5. **AI Analysis** - Understanding confidence scores
+6. **Configuration** - Admin settings and thresholds
+7. **Completion** - Ready to use the system
+
+### Accessing Help
+
+- **First-time users**: Tutorial auto-launches on first login
+- **Returning users**: Click the `?` button or press `?` key
+- **Restart tutorial**: Click "Take the Tutorial" in the Help panel
+
+---
+
 ## Project Structure
 
 ```
@@ -225,6 +256,8 @@ Hotel.Chargeback.Fraud_OMNI/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/   # Reusable UI components
+│   │   │   ├── Layout.jsx    # Main layout with sidebar
+│   │   │   └── Tutorial.jsx  # Tutorial & Help system
 │   │   ├── hooks/        # React hooks (useAuth)
 │   │   ├── pages/        # Page components
 │   │   └── utils/        # API client, helpers

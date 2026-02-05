@@ -18,14 +18,16 @@ import {
   Bell,
   User,
   Building2,
-  Shield
+  Shield,
+  HelpCircle
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Cases', href: '/cases', icon: FileText },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-  { name: 'Settings', href: '/settings', icon: Settings }
+  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Help & Tutorial', href: '#help', icon: HelpCircle, isHelp: true }
 ];
 
 export default function Layout({ children }) {
@@ -115,8 +117,25 @@ export default function Layout({ children }) {
           <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = location.pathname === item.href ||
-                (item.href !== '/' && location.pathname.startsWith(item.href));
+                (item.href !== '/' && !item.isHelp && location.pathname.startsWith(item.href));
               const Icon = item.icon;
+
+              // Handle Help link specially - opens help panel instead of navigating
+              if (item.isHelp) {
+                return (
+                  <button
+                    key={item.name}
+                    className="nav-item nav-item-inactive w-full text-left"
+                    onClick={() => {
+                      setSidebarOpen(false);
+                      setShowHelpPanel(true);
+                    }}
+                  >
+                    <Icon className="w-5 h-5 mr-3" />
+                    {item.name}
+                  </button>
+                );
+              }
 
               return (
                 <Link
