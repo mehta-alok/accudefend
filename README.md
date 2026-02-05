@@ -25,6 +25,9 @@
 - **Real-Time Dashboard** - Live metrics, trends, and case management
 - **Role-Based Access** - Property-level data isolation with RBAC
 - **Audit Trail** - Complete compliance logging for all actions
+- **Technical Backlog** - Built-in backlog management with sprints and epics
+- **AI Agents** - Autonomous agents for backlog management, code review, and security scanning
+- **Cloud Infrastructure** - Multi-region AWS deployment with disaster recovery
 
 ---
 
@@ -248,7 +251,11 @@ Hotel.Chargeback.Fraud_OMNI/
 │   ├── middleware/       # Authentication middleware
 │   ├── prisma/           # Database schema and migrations
 │   ├── routes/           # API route handlers
-│   ├── services/         # Business logic (fraud detection)
+│   ├── services/         # Business logic
+│   │   ├── fraudDetection.js  # AI fraud analysis
+│   │   ├── backlog.js         # Backlog management
+│   │   ├── aiAgents.js        # AI agent orchestration
+│   │   └── integrations.js    # Third-party integrations
 │   ├── utils/            # Helpers (logger, validators)
 │   ├── server.js         # Application entry point
 │   ├── Dockerfile
@@ -264,9 +271,57 @@ Hotel.Chargeback.Fraud_OMNI/
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   └── package.json
+├── infrastructure/
+│   └── aws/
+│       ├── main.tf       # Main Terraform configuration
+│       └── variables.tf  # Infrastructure variables
 ├── docker-compose.yml
+├── AccuDefend_System_Design.md  # Full system documentation
 └── README.md
 ```
+
+---
+
+## Cloud Infrastructure (AWS)
+
+AccuDefend is deployed on AWS with multi-region architecture:
+
+| Component | Service | Details |
+|-----------|---------|---------|
+| **Compute** | ECS Fargate | Auto-scaling containers |
+| **Database** | Aurora PostgreSQL | Multi-AZ, read replicas |
+| **Cache** | ElastiCache Redis | 3-node cluster |
+| **Storage** | S3 | Cross-region replication |
+| **CDN** | CloudFront | Global edge locations |
+| **Secrets** | Secrets Manager | Encrypted credentials |
+
+Infrastructure is managed with Terraform. See `/infrastructure/aws/` for configurations.
+
+---
+
+## AI Agents
+
+AccuDefend employs autonomous AI agents:
+
+| Agent | Purpose | Schedule |
+|-------|---------|----------|
+| **Backlog Manager** | Creates/prioritizes backlog items | Daily |
+| **Code Reviewer** | Reviews pull requests | Event-driven |
+| **Security Scanner** | Scans for vulnerabilities | Daily |
+| **Dispute Analyzer** | Analyzes chargeback cases | Event-driven |
+| **Evidence Processor** | Processes evidence documents | Event-driven |
+
+---
+
+## Technical Backlog
+
+Built-in backlog management system:
+
+- **Epics** - Large features/initiatives
+- **Backlog Items** - Bugs, features, tech debt
+- **Sprints** - Time-boxed iterations
+- **Dependencies** - Item relationships
+- **AI-Generated Items** - Automatically created by AI agents
 
 ---
 
@@ -279,6 +334,7 @@ Hotel.Chargeback.Fraud_OMNI/
 - **RBAC**: Property-level data isolation
 - **Headers**: Helmet security middleware
 - **Token Blacklisting**: Redis-backed revocation
+- **Encryption**: KMS for data at rest, TLS 1.3 in transit
 
 ---
 

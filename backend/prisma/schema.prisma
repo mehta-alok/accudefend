@@ -99,6 +99,10 @@ model User {
   caseNotes     CaseNote[]
   auditLogs     AuditLog[]
 
+  // Backlog Relations
+  assignedItems BacklogItem[] @relation("BacklogAssignee")
+  createdItems  BacklogItem[] @relation("BacklogCreator")
+
   @@map("users")
 }
 
@@ -407,3 +411,368 @@ model SystemConfig {
 
   @@map("system_config")
 }
+
+// =============================================================================
+// TECHNICAL BACKLOG
+// =============================================================================
+
+enum BacklogStatus {
+  OPEN
+  IN_PROGRESS
+  IN_REVIEW
+  TESTING
+  DONE
+  BLOCKED
+  CANCELLED
+}
+
+enum BacklogPriority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum BacklogCategory {
+  BUG
+  FEATURE
+  ENHANCEMENT
+  TECH_DEBT
+  SECURITY
+  PERFORMANCE
+  DOCUMENTATION
+  INFRASTRUCTURE
+}
+
+model BacklogItem {
+  id              String          @id @default(uuid())
+  title           String
+  description     String
+  status          BacklogStatus   @default(OPEN)
+  priority        BacklogPriority @default(MEDIUM)
+  category        BacklogCategory
+  storyPoints     Int?            @map("story_points")
+
+  // Relationships
+  epicId          String?         @map("epic_id")
+  epic            BacklogEpic?    @relation(fields: [epicId], references: [id])
+  sprintId        String?         @map("sprint_id")
+  sprint          Sprint?         @relation(fields: [sprintId], references: [id])
+  assigneeId      String?         @map("assignee_id")
+  assignee        User?           @relation("BacklogAssignee", fields: [assigneeId], references: [id])
+  createdById     String          @map("created_by_id")
+  createdBy       User            @relation("BacklogCreator", fields: [createdById], references: [id])
+
+  // AI Agent Metadata
+  aiGenerated     Boolean         @default(false) @map("ai_generated")
+  aiAgentId       String?         @map("ai_agent_id")
+  aiAgent         AIAgent?        @relation(fields: [aiAgentId], references: [id])
+  aiConfidence    Decimal?        @db.Decimal(5, 2) @map("ai_confidence")
+  aiReasoning     String?         @map("ai_reasoning")
+
+  // Acceptance Criteria & Notes
+  acceptanceCriteria Json?        @map("acceptance_criteria")
+  technicalNotes  String?         @map("technical_notes")
+
+  // Metadata
+  labels          String[]
+  estimatedHours  Decimal?        @db.Decimal(6, 2) @map("estimated_hours")
+  actualHours     Decimal?        @db.Decimal(6, 2) @map("actual_hours")
+  dueDate         DateTime?       @map("due_date")
+  completedAt     DateTime?       @map("completed_at")
+
+  // Timestamps
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  comments        BacklogComment[]
+  dependencies    BacklogDependency[] @relation("DependentItem")
+  blockedBy       BacklogDependency[] @relation("BlockingItem")
+  activities      BacklogActivity[]
+  attachments     BacklogAttachment[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([epicId])
+  @@index([sprintId])
+  @@index([assigneeId])
+  @@index([aiAgentId])
+  @@map("backlog_items")
+}
+
+model BacklogEpic {
+  id              String          @id @default(uuid())
+  title           String
+  description     String
+  status          BacklogStatus   @default(OPEN)
+  priority        BacklogPriority @default(MEDIUM)
+  startDate       DateTime?       @map("start_date")
+  targetDate      DateTime?       @map("target_date")
+  progress        Int             @default(0)
+
+  // Relations
+  items           BacklogItem[]
+  createdById     String          @map("created_by_id")
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@map("backlog_epics")
+}
+
+model Sprint {
+  id              String          @id @default(uuid())
+  name            String
+  goal            String?
+  startDate       DateTime        @map("start_date")
+  endDate         DateTime        @map("end_date")
+  status          String          @default("planned") // planned, active, completed
+  velocity        Int?
+
+  // Relations
+  items           BacklogItem[]
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@map("sprints")
+}
+
+model BacklogComment {
+  id              String          @id @default(uuid())
+  content         String
+
+  // Relations
+  backlogItemId   String          @map("backlog_item_id")
+  backlogItem     BacklogItem     @relation(fields: [backlogItemId], references: [id], onDelete: Cascade)
+  authorId        String?         @map("author_id")
+  aiAgentId       String?         @map("ai_agent_id")
+  aiAgent         AIAgent?        @relation(fields: [aiAgentId], references: [id])
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([backlogItemId])
+  @@map("backlog_comments")
+}
+
+model BacklogDependency {
+  id              String          @id @default(uuid())
+  dependencyType  String          @map("dependency_type") // blocks, relates_to, duplicates
+
+  // Relations
+  dependentItemId String          @map("dependent_item_id")
+  dependentItem   BacklogItem     @relation("DependentItem", fields: [dependentItemId], references: [id], onDelete: Cascade)
+  blockingItemId  String          @map("blocking_item_id")
+  blockingItem    BacklogItem     @relation("BlockingItem", fields: [blockingItemId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@unique([dependentItemId, blockingItemId])
+  @@map("backlog_dependencies")
+}
+
+model BacklogActivity {
+  id              String          @id @default(uuid())
+  action          String          // created, updated, status_changed, assigned, commented, etc.
+  field           String?         // Field that was changed
+  oldValue        String?         @map("old_value")
+  newValue        String?         @map("new_value")
+
+  // Relations
+  backlogItemId   String          @map("backlog_item_id")
+  backlogItem     BacklogItem     @relation(fields: [backlogItemId], references: [id], onDelete: Cascade)
+  userId          String?         @map("user_id")
+  aiAgentId       String?         @map("ai_agent_id")
+  aiAgent         AIAgent?        @relation(fields: [aiAgentId], references: [id])
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@index([backlogItemId])
+  @@map("backlog_activities")
+}
+
+model BacklogAttachment {
+  id              String          @id @default(uuid())
+  fileName        String          @map("file_name")
+  s3Key           String          @map("s3_key")
+  mimeType        String          @map("mime_type")
+  fileSize        Int             @map("file_size")
+
+  // Relations
+  backlogItemId   String          @map("backlog_item_id")
+  backlogItem     BacklogItem     @relation(fields: [backlogItemId], references: [id], onDelete: Cascade)
+  uploadedById    String?         @map("uploaded_by_id")
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@index([backlogItemId])
+  @@map("backlog_attachments")
+}
+
+// =============================================================================
+// AI AGENTS
+// =============================================================================
+
+enum AIAgentType {
+  BACKLOG_MANAGER       // Creates and prioritizes backlog items
+  CODE_REVIEWER         // Reviews PRs and suggests improvements
+  DOCUMENTATION_AGENT   // Generates and updates documentation
+  TEST_GENERATOR        // Creates test cases
+  SECURITY_SCANNER      // Scans for vulnerabilities
+  PERFORMANCE_MONITOR   // Monitors and suggests optimizations
+  DISPUTE_ANALYZER      // Analyzes chargeback disputes
+  EVIDENCE_PROCESSOR    // Processes and validates evidence
+}
+
+enum AIAgentStatus {
+  IDLE
+  RUNNING
+  PAUSED
+  ERROR
+  DISABLED
+}
+
+model AIAgent {
+  id              String          @id @default(uuid())
+  name            String
+  type            AIAgentType
+  description     String?
+  status          AIAgentStatus   @default(IDLE)
+
+  // Configuration
+  config          Json?           // Agent-specific configuration
+  schedule        String?         // Cron expression for scheduled runs
+  priority        Int             @default(5) // 1-10, higher = more priority
+
+  // Capabilities
+  capabilities    String[]        // List of capabilities/permissions
+  modelProvider   String          @default("anthropic") @map("model_provider")
+  modelName       String          @default("claude-3-sonnet") @map("model_name")
+  maxTokens       Int             @default(4096) @map("max_tokens")
+  temperature     Decimal         @default(0.7) @db.Decimal(3, 2)
+
+  // Statistics
+  totalRuns       Int             @default(0) @map("total_runs")
+  successfulRuns  Int             @default(0) @map("successful_runs")
+  failedRuns      Int             @default(0) @map("failed_runs")
+  avgDuration     Decimal?        @db.Decimal(10, 2) @map("avg_duration_ms")
+  lastRunAt       DateTime?       @map("last_run_at")
+  lastErrorAt     DateTime?       @map("last_error_at")
+  lastError       String?         @map("last_error")
+
+  // Relations
+  runs            AIAgentRun[]
+  backlogItems    BacklogItem[]
+  comments        BacklogComment[]
+  activities      BacklogActivity[]
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([status])
+  @@map("ai_agents")
+}
+
+model AIAgentRun {
+  id              String          @id @default(uuid())
+  status          String          // running, completed, failed, cancelled
+  trigger         String          // scheduled, manual, webhook, event
+
+  // Input/Output
+  input           Json?
+  output          Json?
+
+  // Metrics
+  startedAt       DateTime        @default(now()) @map("started_at")
+  completedAt     DateTime?       @map("completed_at")
+  durationMs      Int?            @map("duration_ms")
+  tokensUsed      Int?            @map("tokens_used")
+  cost            Decimal?        @db.Decimal(10, 6)
+
+  // Error handling
+  errorMessage    String?         @map("error_message")
+  errorStack      String?         @map("error_stack")
+  retryCount      Int             @default(0) @map("retry_count")
+
+  // Relations
+  agentId         String          @map("agent_id")
+  agent           AIAgent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("ai_agent_runs")
+}
+
+// =============================================================================
+// THIRD-PARTY INTEGRATIONS
+// =============================================================================
+
+model Integration {
+  id              String          @id @default(uuid())
+  name            String
+  type            String          // stripe, adyen, shift4, elavon, slack, jira, github
+  status          String          @default("inactive") // active, inactive, error
+
+  // Configuration (encrypted)
+  config          Json?
+  credentials     Json?           // Encrypted API keys, tokens, etc.
+  webhookUrl      String?         @map("webhook_url")
+  webhookSecret   String?         @map("webhook_secret")
+
+  // OAuth tokens (if applicable)
+  accessToken     String?         @map("access_token")
+  refreshToken    String?         @map("refresh_token")
+  tokenExpiresAt  DateTime?       @map("token_expires_at")
+
+  // Sync settings
+  syncEnabled     Boolean         @default(true) @map("sync_enabled")
+  lastSyncAt      DateTime?       @map("last_sync_at")
+  lastSyncStatus  String?         @map("last_sync_status")
+  syncErrors      Int             @default(0) @map("sync_errors")
+
+  // Relations
+  events          IntegrationEvent[]
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  @@index([type])
+  @@index([status])
+  @@map("integrations")
+}
+
+model IntegrationEvent {
+  id              String          @id @default(uuid())
+  eventType       String          @map("event_type")
+  direction       String          // inbound, outbound
+  payload         Json
+
+  // Processing
+  processed       Boolean         @default(false)
+  processedAt     DateTime?       @map("processed_at")
+  response        Json?
+  errorMessage    String?         @map("error_message")
+  retryCount      Int             @default(0) @map("retry_count")
+
+  // Relations
+  integrationId   String          @map("integration_id")
+  integration     Integration     @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  @@index([integrationId])
+  @@index([eventType])
+  @@index([processed])
+  @@map("integration_events")
+}
+
+// =============================================================================
+// USER RELATIONS UPDATE
+// =============================================================================
+
+// Add these to User model (already exists, need to add missing relations)
