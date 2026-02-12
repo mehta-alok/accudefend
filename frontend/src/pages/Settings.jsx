@@ -241,6 +241,7 @@ export default function Settings() {
     { id: 'FOLIO', label: 'Folio/Invoice', description: 'Detailed hotel bill and charges' },
     { id: 'RESERVATION_CONFIRMATION', label: 'Reservation Confirmation', description: 'Booking confirmation sent to guest' },
     { id: 'CANCELLATION_POLICY', label: 'Cancellation Policy', description: 'Policy agreed to during booking' },
+    { id: 'CANCELLATION_POLICY_VIOLATION', label: 'Policy Violation Documentation', description: 'Proof guest cancelled outside policy terms' },
     { id: 'KEY_CARD_LOG', label: 'Key Card Log', description: 'Room access records' },
     { id: 'CCTV_FOOTAGE', label: 'CCTV Footage', description: 'Video evidence of guest presence' },
     { id: 'CORRESPONDENCE', label: 'Correspondence', description: 'Emails/messages with guest' },

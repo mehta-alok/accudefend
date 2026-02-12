@@ -26,14 +26,15 @@ const DEFAULT_AI_CONFIG = {
 
   // Evidence Weights (total should equal 100)
   evidenceWeights: {
-    ID_SCAN: 18,
-    AUTH_SIGNATURE: 18,
-    CHECKOUT_SIGNATURE: 12,
-    FOLIO: 14,
+    ID_SCAN: 16,
+    AUTH_SIGNATURE: 16,
+    CHECKOUT_SIGNATURE: 10,
+    FOLIO: 12,
     KEY_CARD_LOG: 8,
     CORRESPONDENCE: 8,
     CCTV_FOOTAGE: 4,
     CANCELLATION_POLICY: 4,
+    CANCELLATION_POLICY_VIOLATION: 8,
     POLICE_REPORT: 8,
     NO_SHOW_DOCUMENTATION: 6
   },
@@ -117,6 +118,13 @@ const DEFAULT_AI_CONFIG = {
       recommendedEvidence: ['FOLIO', 'KEY_CARD_LOG', 'POLICE_REPORT'],
       responseTemplate: 'identity_fraud_defense',
       priority: 8
+    },
+    POLICY_VIOLATION: {
+      name: 'Cancelled - Not Adhering to Policy Defense',
+      requiredEvidence: ['CANCELLATION_POLICY', 'CANCELLATION_POLICY_VIOLATION', 'CORRESPONDENCE'],
+      recommendedEvidence: ['FOLIO', 'RESERVATION_CONFIRMATION', 'NO_SHOW_DOCUMENTATION'],
+      responseTemplate: 'policy_violation_defense',
+      priority: 9
     }
   },
 
