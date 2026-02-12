@@ -26,6 +26,7 @@ const evidenceRoutes = require('./routes/evidence');
 const analyticsRoutes = require('./routes/analytics');
 const webhooksRoutes = require('./routes/webhooks');
 const adminRoutes = require('./routes/admin');
+const pmsRoutes = require('./routes/pms');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -145,6 +146,7 @@ app.use('/api/evidence', evidenceRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/pms', pmsRoutes);
 
 // API documentation redirect
 app.get('/api', (req, res) => {
@@ -158,7 +160,8 @@ app.get('/api', (req, res) => {
       evidence: '/api/evidence',
       analytics: '/api/analytics',
       webhooks: '/api/webhooks',
-      admin: '/api/admin'
+      admin: '/api/admin',
+      pms: '/api/pms'
     }
   });
 });

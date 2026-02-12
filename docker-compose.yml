@@ -2,6 +2,12 @@
 # ACCUDEFEND - Hotel Chargeback Defense System
 # Docker Compose Configuration
 # =============================================================================
+# Usage:
+#   Local Dev:    docker-compose up -d
+#   Development:  docker-compose --env-file .env.development up -d
+#   Staging:      docker-compose --env-file .env.staging up -d
+#   Production:   docker-compose --env-file .env.production up -d
+# =============================================================================
 
 version: '3.8'
 
@@ -14,15 +20,15 @@ services:
     container_name: accudefend-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: accudefend_user
-      POSTGRES_PASSWORD: accudefend_password
-      POSTGRES_DB: accudefend_db
+      POSTGRES_USER: ${DB_USER:-accudefend_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-accudefend_password}
+      POSTGRES_DB: ${DB_NAME:-accudefend_db}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U accudefend_user -d accudefend_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-accudefend_user} -d ${DB_NAME:-accudefend_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,10 +43,10 @@ services:
     container_name: accudefend-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -59,30 +65,44 @@ services:
     container_name: accudefend-api
     restart: unless-stopped
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-development}
+      DEPLOY_ENV: ${DEPLOY_ENV:-local}
       PORT: 8000
-      DATABASE_URL: postgresql://accudefend_user:accudefend_password@postgres:5432/accudefend_db?schema=public
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgresql://${DB_USER:-accudefend_user}:${DB_PASSWORD:-accudefend_password}@postgres:5432/${DB_NAME:-accudefend_db}?schema=public
+      REDIS_URL: redis://${REDIS_PASSWORD:+:$REDIS_PASSWORD@}redis:6379
       JWT_SECRET: ${JWT_SECRET:-accudefend-super-secret-jwt-key-change-in-production}
-      JWT_ACCESS_EXPIRY: 15m
-      JWT_REFRESH_EXPIRY: 7d
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-accudefend-refresh-secret-change-in-production}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+      # AWS Configuration
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_S3_BUCKET: ${AWS_S3_BUCKET:-accudefend-evidence}
+      # AI Configuration
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      AI_MODEL: ${AI_MODEL:-gpt-4-turbo}
+      AI_AUTO_SUBMIT_THRESHOLD: ${AI_AUTO_SUBMIT_THRESHOLD:-85}
+      # PMS Integration
+      PMS_ENCRYPTION_KEY: ${PMS_ENCRYPTION_KEY}
+      # Payment Processors
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
-      FRONTEND_URL: http://localhost:3000
-      CORS_ORIGINS: http://localhost:3000,http://localhost:80
+      # Frontend
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:80}
+      # Notifications
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -96,10 +116,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${API_BASE_URL:-http://localhost:8000}
     container_name: accudefend-frontend
     restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
       - api
     networks:
@@ -114,7 +138,7 @@ services:
       dockerfile: Dockerfile
     container_name: accudefend-migrate
     environment:
-      DATABASE_URL: postgresql://accudefend_user:accudefend_password@postgres:5432/accudefend_db?schema=public
+      DATABASE_URL: postgresql://${DB_USER:-accudefend_user}:${DB_PASSWORD:-accudefend_password}@postgres:5432/${DB_NAME:-accudefend_db}?schema=public
     command: sh -c "npx prisma migrate deploy && npx prisma db seed"
     depends_on:
       postgres:

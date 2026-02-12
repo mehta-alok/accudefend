@@ -114,6 +114,8 @@ docker-compose exec api npx prisma migrate deploy
 | Email | Password | Role |
 |-------|----------|------|
 | admin@accudefend.com | AccuAdmin123! | Admin |
+| demo@accudefend.com | Demo2024! | Admin |
+| alok@accudefend.com | Alok@123 | Admin |
 | manager.atlanta@accudefend.com | AccuAdmin123! | Manager |
 | staff.atlanta@accudefend.com | AccuAdmin123! | Staff |
 
@@ -231,8 +233,9 @@ AccuDefend includes a built-in **interactive tutorial** and **contextual help sy
 3. **Managing Cases** - Navigating and filtering cases
 4. **Uploading Evidence** - Adding documentation to cases
 5. **AI Analysis** - Understanding confidence scores
-6. **Configuration** - Admin settings and thresholds
-7. **Completion** - Ready to use the system
+6. **PMS Integration** - Connecting to Property Management Systems
+7. **Configuration** - Admin settings and thresholds
+8. **Completion** - Ready to use the system
 
 ### Accessing Help
 
@@ -296,6 +299,85 @@ AccuDefend is deployed on AWS with multi-region architecture:
 | **Secrets** | Secrets Manager | Encrypted credentials |
 
 Infrastructure is managed with Terraform. See `/infrastructure/aws/` for configurations.
+
+### Deployment Environments
+
+| Environment | URL | Purpose |
+|-------------|-----|---------|
+| **Local** | http://localhost:3000 | Developer machines |
+| **Development** | https://dev.accudefend.com | Dev server testing |
+| **Staging** | https://staging.accudefend.com | QA/UAT testing |
+| **Production** | https://app.accudefend.com | Live system |
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+---
+
+## AI Defense Configuration
+
+AccuDefend uses intelligent AI-powered defense strategies:
+
+### Confidence Thresholds
+
+| Score | Recommendation | Action |
+|-------|----------------|--------|
+| 85-100% | AUTO_SUBMIT | Submit defense immediately |
+| 70-84% | REVIEW_RECOMMENDED | Human review needed |
+| 50-69% | GATHER_MORE_EVIDENCE | Missing documentation |
+| 0-49% | UNLIKELY_TO_WIN | Consider accepting loss |
+
+### Evidence Weights
+
+| Evidence Type | Weight | Priority |
+|---------------|--------|----------|
+| ID Scan | 20% | Required |
+| Authorization Signature | 20% | Required |
+| Checkout Signature | 15% | Recommended |
+| Guest Folio | 15% | Required |
+| Key Card Log | 10% | Recommended |
+| Correspondence | 10% | Optional |
+| CCTV Footage | 5% | Optional |
+| Cancellation Policy | 5% | Conditional |
+
+### Defense Strategies by Reason Code
+
+| Category | Example Codes | Strategy |
+|----------|---------------|----------|
+| Fraud Claims | 10.1-10.5 (Visa), 4837 (MC) | ID + Signature required |
+| Service Not Received | 13.1 (Visa), 4855 (MC) | Folio + Key card log |
+| Not As Described | 13.3 (Visa), 4853 (MC) | Folio + Correspondence |
+| Duplicate Charge | 13.6-13.7 (Visa) | Folio documentation |
+| Cancelled Reservation | 13.2 (Visa), C18 (Amex) | Cancellation policy |
+
+---
+
+## PMS Integration
+
+AccuDefend integrates with 12+ Property Management Systems:
+
+| PMS | Auth Type | Two-Way Sync |
+|-----|-----------|--------------|
+| Oracle Opera Cloud | OAuth 2.0 | ✅ |
+| Mews Systems | API Key | ✅ |
+| AutoClerk | API Key | ✅ |
+| Cloudbeds | OAuth 2.0 | ✅ |
+| protel PMS | Basic Auth | ✅ |
+| StayNTouch | OAuth 2.0 | ✅ |
+| Apaleo | OAuth 2.0 | ✅ |
+| innRoad | OAuth 2.0 | ✅ |
+| WebRezPro | API Key | ❌ |
+| RoomMaster | Basic Auth | ❌ |
+| Little Hotelier | API Key | ❌ |
+| RoomKeyPMS | API Key | ✅ |
+
+### Evidence Types from PMS
+
+- Guest Folio (with all charges)
+- Registration Card (signed)
+- Payment Receipt (authorization)
+- Digital Signature
+- ID Document Scan
+- Booking Confirmation
 
 ---
 

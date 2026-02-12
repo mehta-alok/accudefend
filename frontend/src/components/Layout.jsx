@@ -19,12 +19,20 @@ import {
   User,
   Building2,
   Shield,
-  HelpCircle
+  HelpCircle,
+  Search,
+  ChevronDown,
+  Plus,
+  Sun,
+  Moon,
+  Sunrise,
+  Link2
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Cases', href: '/cases', icon: FileText },
+  { name: 'PMS Integration', href: '/pms', icon: Link2 },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Help & Tutorial', href: '#help', icon: HelpCircle, isHelp: true }
@@ -35,9 +43,22 @@ export default function Layout({ children }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [showHelpPanel, setShowHelpPanel] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [notificationCount] = useState(3); // Example notification count
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return { text: 'Good morning', icon: Sunrise };
+    if (hour < 18) return { text: 'Good afternoon', icon: Sun };
+    return { text: 'Good evening', icon: Moon };
+  };
+
+  const greeting = getGreeting();
 
   // Check if user has completed tutorial on first load
   useEffect(() => {
@@ -176,73 +197,170 @@ export default function Layout({ children }) {
 
       {/* Main content */}
       <div className="lg:pl-64">
-        {/* Top header */}
-        <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 bg-white border-b border-gray-200 lg:px-8">
-          <button
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-6 h-6 text-gray-500" />
-          </button>
-
-          <div className="flex-1 lg:flex-none">
-            {/* Page title can go here */}
-          </div>
-
-          <div className="flex items-center space-x-4">
-            {/* Notifications */}
-            <button className="relative p-2 rounded-lg hover:bg-gray-100">
-              <Bell className="w-5 h-5 text-gray-500" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-            </button>
-
-            {/* User menu */}
-            <div className="relative">
+        {/* Top header - Enhanced User-Friendly Design */}
+        <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between h-16 px-4 lg:px-8">
+            {/* Left side - Mobile menu & Greeting */}
+            <div className="flex items-center space-x-4">
               <button
-                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => setSidebarOpen(true)}
               >
-                <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded-full">
-                  <span className="text-sm font-medium text-white">
-                    {user?.firstName?.[0]}{user?.lastName?.[0]}
-                  </span>
-                </div>
-                <span className="hidden md:block text-sm font-medium text-gray-700">
-                  {user?.firstName}
-                </span>
+                <Menu className="w-6 h-6 text-gray-500" />
               </button>
 
-              {/* Dropdown */}
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 animate-fade-in">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-xs text-gray-500">{user?.role}</p>
-                  </div>
-                  <Link
-                    to="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setUserMenuOpen(false)}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </Link>
-                  <button
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      handleLogout();
-                    }}
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign out
-                  </button>
+              {/* Greeting - Hidden on mobile */}
+              <div className="hidden md:flex items-center space-x-2">
+                <greeting.icon className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="text-sm text-gray-500">{greeting.text},</p>
+                  <p className="text-base font-semibold text-gray-900">{user?.firstName || 'User'}</p>
                 </div>
-              )}
+              </div>
+            </div>
+
+            {/* Center - Search Bar */}
+            <div className="flex-1 max-w-xl mx-4 hidden md:block">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search cases, analytics, or settings..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
+                />
+                <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 hidden lg:inline-flex items-center px-2 py-0.5 text-xs text-gray-400 bg-gray-100 rounded">
+                  ⌘K
+                </kbd>
+              </div>
+            </div>
+
+            {/* Right side - Actions */}
+            <div className="flex items-center space-x-2 lg:space-x-3">
+              {/* Mobile Search Toggle */}
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => setShowSearch(!showSearch)}
+              >
+                <Search className="w-5 h-5 text-gray-500" />
+              </button>
+
+              {/* Quick Add Button */}
+              <button
+                className="hidden sm:flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                onClick={() => navigate('/cases')}
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden lg:inline">New Case</span>
+              </button>
+
+              {/* Help Button */}
+              <button
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                onClick={() => setShowHelpPanel(true)}
+                title="Help (Press ?)"
+              >
+                <HelpCircle className="w-5 h-5 text-gray-500" />
+              </button>
+
+              {/* Notifications */}
+              <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors group">
+                <Bell className="w-5 h-5 text-gray-500 group-hover:text-gray-700" />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-red-500 rounded-full ring-2 ring-white">
+                    {notificationCount > 9 ? '9+' : notificationCount}
+                  </span>
+                )}
+              </button>
+
+              {/* User menu */}
+              <div className="relative">
+                <button
+                  className="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                >
+                  <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full ring-2 ring-white shadow-sm">
+                    <span className="text-sm font-semibold text-white">
+                      {user?.firstName?.[0]}{user?.lastName?.[0]}
+                    </span>
+                  </div>
+                  <div className="hidden lg:block text-left">
+                    <p className="text-sm font-medium text-gray-700">{user?.firstName}</p>
+                    <p className="text-xs text-gray-500">{user?.role || 'User'}</p>
+                  </div>
+                  <ChevronDown className="hidden lg:block w-4 h-4 text-gray-400" />
+                </button>
+
+                {/* Dropdown */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 animate-fade-in">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {user?.firstName} {user?.lastName}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">{user?.email}</p>
+                      {user?.property && (
+                        <div className="mt-2 flex items-center text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                          <Building2 className="w-3 h-3 mr-1" />
+                          {user.property.name}
+                        </div>
+                      )}
+                    </div>
+                    <div className="py-1">
+                      <Link
+                        to="/settings"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Settings className="w-4 h-4 mr-3 text-gray-400" />
+                        Settings
+                      </Link>
+                      <button
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          setShowHelpPanel(true);
+                        }}
+                      >
+                        <HelpCircle className="w-4 h-4 mr-3 text-gray-400" />
+                        Help & Support
+                      </button>
+                    </div>
+                    <div className="border-t border-gray-100 pt-1">
+                      <button
+                        onClick={() => {
+                          setUserMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Mobile Search Bar - Expandable */}
+          {showSearch && (
+            <div className="md:hidden px-4 pb-3 animate-fade-in">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  autoFocus
+                  className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          )}
         </header>
 
         {/* Page content */}

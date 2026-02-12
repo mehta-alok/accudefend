@@ -160,6 +160,8 @@ async function main() {
   console.log('Creating users...');
 
   const passwordHash = await bcrypt.hash('AccuAdmin123!', 12);
+  const demoPasswordHash = await bcrypt.hash('Demo2024!', 12);
+  const alokPasswordHash = await bcrypt.hash('Alok@123', 12);
 
   const users = await Promise.all([
     prisma.user.upsert({
@@ -170,6 +172,30 @@ async function main() {
         passwordHash,
         firstName: 'System',
         lastName: 'Administrator',
+        role: 'ADMIN'
+      }
+    }),
+    // New Demo User
+    prisma.user.upsert({
+      where: { email: 'demo@accudefend.com' },
+      update: {},
+      create: {
+        email: 'demo@accudefend.com',
+        passwordHash: demoPasswordHash,
+        firstName: 'Demo',
+        lastName: 'User',
+        role: 'ADMIN'
+      }
+    }),
+    // Alok User
+    prisma.user.upsert({
+      where: { email: 'alok@accudefend.com' },
+      update: {},
+      create: {
+        email: 'alok@accudefend.com',
+        passwordHash: alokPasswordHash,
+        firstName: 'Alok',
+        lastName: 'Mehta',
         role: 'ADMIN'
       }
     }),
@@ -435,9 +461,12 @@ async function main() {
   console.log(`  Users:         ${users.length}`);
   console.log(`  Chargebacks:   ${chargebacks.length}`);
   console.log('═══════════════════════════════════════════════════════════════');
-  console.log('\n  Default Admin Login:');
-  console.log('  Email:    admin@accudefend.com');
-  console.log('  Password: AccuAdmin123!');
+  console.log('\n  Login Credentials:');
+  console.log('  ───────────────────────────────────────');
+  console.log('  Admin:    admin@accudefend.com / AccuAdmin123!');
+  console.log('  Demo:     demo@accudefend.com / Demo2024!');
+  console.log('  Alok:     alok@accudefend.com / Alok@123');
+  console.log('  ───────────────────────────────────────');
   console.log('\n');
 }
 

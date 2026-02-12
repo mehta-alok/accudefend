@@ -20,7 +20,8 @@ import {
   Zap,
   HelpCircle,
   BarChart3,
-  Mail
+  Mail,
+  Link2
 } from 'lucide-react';
 
 const tutorialSteps = [
@@ -78,6 +79,17 @@ const tutorialSteps = [
       'Confidence scores indicate win probability',
       'AI recommendations guide your next steps',
       'Fraud indicators highlight risk factors'
+    ]
+  },
+  {
+    id: 'pms-integration',
+    title: 'PMS Integration',
+    description: 'Connect directly to your Property Management System to automatically fetch evidence for disputes.',
+    icon: Link2,
+    tips: [
+      'Connect to 12+ supported PMS systems (Opera, Mews, AutoClerk, etc.)',
+      'Search reservations and fetch evidence with one click',
+      'Two-way sync keeps data updated in real-time'
     ]
   },
   {
@@ -267,6 +279,7 @@ export function HelpPanel({ isOpen, onClose, onStartTutorial }) {
         { label: 'Take the Tutorial', action: onStartTutorial, highlight: true, icon: HelpCircle },
         { label: 'Dashboard Overview', link: '/', icon: LayoutDashboard },
         { label: 'Managing Cases', link: '/cases', icon: FileText },
+        { label: 'PMS Integration', link: '/pms', icon: Link2 },
         { label: 'Analytics & Reports', link: '/analytics', icon: BarChart3 }
       ]
     },
@@ -276,6 +289,14 @@ export function HelpPanel({ isOpen, onClose, onStartTutorial }) {
         { label: 'Creating a New Case', info: 'Cases are created automatically from webhook events or manually via API', icon: FileText },
         { label: 'Uploading Evidence', info: 'Go to case details and use the Evidence tab to upload files', icon: Upload },
         { label: 'AI Recommendations', info: 'AI analyzes evidence and provides confidence scores', icon: Brain }
+      ]
+    },
+    {
+      title: 'PMS Integration',
+      items: [
+        { label: 'Connect Your PMS', link: '/pms', info: 'Link to Opera, Mews, AutoClerk, and 9 more systems', icon: Link2 },
+        { label: 'Search & Fetch Evidence', link: '/pms', info: 'Find reservations and download folios, signatures, ID scans', icon: FileText },
+        { label: 'Two-Way Sync', info: 'Real-time sync pushes chargeback alerts to your PMS', icon: Upload }
       ]
     },
     {

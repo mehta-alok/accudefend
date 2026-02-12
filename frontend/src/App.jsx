@@ -13,6 +13,7 @@ import Cases from './pages/Cases';
 import CaseDetail from './pages/CaseDetail';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import PMSIntegration from './pages/PMSIntegration';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -81,6 +82,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pms"
+          element={
+            <ProtectedRoute>
+              <PMSIntegration />
             </ProtectedRoute>
           }
         />
