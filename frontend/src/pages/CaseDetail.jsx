@@ -392,13 +392,107 @@ export default function CaseDetail() {
   );
 }
 
-// Evidence Tab Component
+// Evidence Tab Component with Photo Upload
 function EvidenceTab({ caseId, evidence, onUpdate }) {
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadType, setUploadType] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [description, setDescription] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+
+  const evidenceTypeOptions = [
+    { value: 'ID_SCAN', label: 'ID Scan', icon: '🪪' },
+    { value: 'AUTH_SIGNATURE', label: 'Authorization Signature', icon: '✍️' },
+    { value: 'CHECKOUT_SIGNATURE', label: 'Checkout Signature', icon: '📝' },
+    { value: 'FOLIO', label: 'Folio/Invoice', icon: '🧾' },
+    { value: 'RESERVATION_CONFIRMATION', label: 'Reservation Confirmation', icon: '📧' },
+    { value: 'CANCELLATION_POLICY', label: 'Cancellation Policy', icon: '📋' },
+    { value: 'CANCELLATION_POLICY_VIOLATION', label: 'Policy Violation Documentation', icon: '⚠️' },
+    { value: 'KEY_CARD_LOG', label: 'Key Card Log', icon: '🔑' },
+    { value: 'CCTV_FOOTAGE', label: 'CCTV Footage', icon: '📹' },
+    { value: 'CORRESPONDENCE', label: 'Correspondence', icon: '💬' },
+    { value: 'INCIDENT_REPORT', label: 'Incident Report', icon: '📄' },
+    { value: 'DAMAGE_PHOTOS', label: 'Damage Photos', icon: '📷' },
+    { value: 'DAMAGE_ASSESSMENT', label: 'Damage Assessment', icon: '📊' },
+    { value: 'POLICE_REPORT', label: 'Police Report', icon: '👮' },
+    { value: 'NO_SHOW_DOCUMENTATION', label: 'No Show Documentation', icon: '🚫' },
+    { value: 'OTHER', label: 'Other Documents', icon: '📎' }
+  ];
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files);
+    }
+  };
+
+  const handleFiles = (files) => {
+    const fileArray = Array.from(files);
+    setSelectedFiles(prev => [...prev, ...fileArray]);
+  };
+
+  const handleFileInput = (e) => {
+    if (e.target.files) {
+      handleFiles(e.target.files);
+    }
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpload = async () => {
+    if (!uploadType || selectedFiles.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', uploadType);
+        formData.append('description', description);
+
+        await api.upload(`/evidence/${caseId}/upload`, formData);
+      }
+
+      setShowUploadModal(false);
+      setSelectedFiles([]);
+      setUploadType('');
+      setDescription('');
+      onUpdate();
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const isImageFile = (fileName) => {
+    const ext = fileName.toLowerCase().split('.').pop();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(ext);
+  };
+
   return (
     <div className="card">
       <div className="card-header flex items-center justify-between">
         <h3 className="font-semibold">Evidence Files</h3>
-        <button className="btn-primary">
+        <button
+          className="btn-primary"
+          onClick={() => setShowUploadModal(true)}
+        >
           <Upload className="w-4 h-4 mr-2" /> Upload Evidence
         </button>
       </div>
@@ -406,10 +500,21 @@ function EvidenceTab({ caseId, evidence, onUpdate }) {
         {evidence?.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {evidence.map((e) => (
-              <div key={e.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={e.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-gray-400" />
+                    {isImageFile(e.fileName) ? (
+                      <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                        <img
+                          src={e.downloadUrl}
+                          alt={e.fileName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => e.target.style.display = 'none'}
+                        />
+                      </div>
+                    ) : (
+                      <FileText className="w-8 h-8 text-gray-400" />
+                    )}
                     <div>
                       <p className="font-medium text-sm truncate max-w-[150px]">{e.fileName}</p>
                       <p className="text-xs text-gray-500">{e.type.replace(/_/g, ' ')}</p>
@@ -431,10 +536,179 @@ function EvidenceTab({ caseId, evidence, onUpdate }) {
           <div className="text-center py-12 text-gray-500">
             <Upload className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No evidence uploaded yet</p>
-            <p className="text-sm mt-1">Upload ID scans, folios, signatures, and more</p>
+            <p className="text-sm mt-1">Upload ID scans, folios, signatures, photos, and more</p>
+            <button
+              className="btn-primary mt-4"
+              onClick={() => setShowUploadModal(true)}
+            >
+              <Upload className="w-4 h-4 mr-2" /> Upload First Evidence
+            </button>
           </div>
         )}
       </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Upload Evidence</h2>
+                <button
+                  onClick={() => setShowUploadModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Evidence Type Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Evidence Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={uploadType}
+                  onChange={(e) => setUploadType(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select evidence type...</option>
+                  {evidenceTypeOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.icon} {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Drag & Drop Zone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Files <span className="text-red-500">*</span>
+                </label>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                    dragActive
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                >
+                  <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-gray-600 mb-2">
+                    Drag and drop files here, or click to browse
+                  </p>
+                  <p className="text-xs text-gray-400 mb-4">
+                    Supports: JPG, PNG, PDF, DOCX, TXT (Max 10MB per file)
+                  </p>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.txt"
+                    onChange={handleFileInput}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="btn-secondary cursor-pointer"
+                  >
+                    Browse Files
+                  </label>
+                </div>
+              </div>
+
+              {/* Selected Files Preview */}
+              {selectedFiles.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Selected Files ({selectedFiles.length})
+                  </label>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {selectedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-gray-50 rounded-lg p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          {file.type.startsWith('image/') ? (
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                          ) : (
+                            <FileText className="w-10 h-10 text-gray-400" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium truncate max-w-[200px]">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description (Optional)
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add any notes about this evidence..."
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpload}
+                disabled={!uploadType || selectedFiles.length === 0 || uploading}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {uploading ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload {selectedFiles.length > 0 ? `(${selectedFiles.length})` : ''}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
