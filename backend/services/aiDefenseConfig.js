@@ -26,17 +26,19 @@ const DEFAULT_AI_CONFIG = {
 
   // Evidence Weights (total should equal 100)
   evidenceWeights: {
-    ID_SCAN: 16,
-    AUTH_SIGNATURE: 16,
+    ID_SCAN: 14,
+    AUTH_SIGNATURE: 14,
     CHECKOUT_SIGNATURE: 10,
     FOLIO: 12,
     KEY_CARD_LOG: 8,
-    CORRESPONDENCE: 8,
+    CORRESPONDENCE: 6,
     CCTV_FOOTAGE: 4,
     CANCELLATION_POLICY: 4,
-    CANCELLATION_POLICY_VIOLATION: 8,
-    POLICE_REPORT: 8,
-    NO_SHOW_DOCUMENTATION: 6
+    CANCELLATION_POLICY_VIOLATION: 6,
+    DAMAGE_PHOTOS: 6,
+    DAMAGE_ASSESSMENT: 6,
+    POLICE_REPORT: 6,
+    NO_SHOW_DOCUMENTATION: 4
   },
 
   // Fraud Detection Settings
@@ -108,9 +110,16 @@ const DEFAULT_AI_CONFIG = {
     GUEST_BEHAVIOR_ABUSE: {
       name: 'Guest Behavior/Abuse Defense',
       requiredEvidence: ['FOLIO', 'INCIDENT_REPORT'],
-      recommendedEvidence: ['POLICE_REPORT', 'CCTV_FOOTAGE', 'DAMAGE_PHOTOS', 'CORRESPONDENCE'],
+      recommendedEvidence: ['POLICE_REPORT', 'CCTV_FOOTAGE', 'DAMAGE_PHOTOS', 'DAMAGE_ASSESSMENT', 'CORRESPONDENCE'],
       responseTemplate: 'behavior_abuse_defense',
       priority: 7
+    },
+    PROPERTY_DAMAGE: {
+      name: 'Property Damage Defense',
+      requiredEvidence: ['FOLIO', 'DAMAGE_PHOTOS', 'DAMAGE_ASSESSMENT', 'INCIDENT_REPORT'],
+      recommendedEvidence: ['POLICE_REPORT', 'CCTV_FOOTAGE', 'CORRESPONDENCE', 'AUTH_SIGNATURE'],
+      responseTemplate: 'property_damage_defense',
+      priority: 10
     },
     IDENTITY_FRAUD: {
       name: 'Identity Fraud Defense',

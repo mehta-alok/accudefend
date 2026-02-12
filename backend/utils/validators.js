@@ -34,6 +34,7 @@ const EvidenceType = z.enum([
   'CORRESPONDENCE',
   'INCIDENT_REPORT',
   'DAMAGE_PHOTOS',
+  'DAMAGE_ASSESSMENT',
   'POLICE_REPORT',
   'NO_SHOW_DOCUMENTATION',
   'OTHER'
@@ -48,6 +49,7 @@ const DisputeType = z.enum([
   'GUEST_BEHAVIOR_ABUSE',
   'NO_SHOW',
   'POLICY_VIOLATION',
+  'PROPERTY_DAMAGE',
   'OCCUPANCY_FRAUD'
 ]);
 

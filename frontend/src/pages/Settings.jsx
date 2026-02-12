@@ -247,6 +247,7 @@ export default function Settings() {
     { id: 'CORRESPONDENCE', label: 'Correspondence', description: 'Emails/messages with guest' },
     { id: 'INCIDENT_REPORT', label: 'Incident Report', description: 'Staff-documented incident details' },
     { id: 'DAMAGE_PHOTOS', label: 'Damage Photos', description: 'Photos of property damage' },
+    { id: 'DAMAGE_ASSESSMENT', label: 'Damage Assessment', description: 'Professional assessment of damages and repair costs' },
     { id: 'POLICE_REPORT', label: 'Police Report', description: 'Law enforcement documentation' },
     { id: 'NO_SHOW_DOCUMENTATION', label: 'No Show Documentation', description: 'Proof of non-arrival and hold policy' },
     { id: 'OTHER', label: 'Other Documents', description: 'Additional supporting evidence' }
