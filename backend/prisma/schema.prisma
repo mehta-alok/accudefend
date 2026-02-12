@@ -105,6 +105,9 @@ model User {
   assignedItems BacklogItem[] @relation("BacklogAssignee")
   createdItems  BacklogItem[] @relation("BacklogCreator")
 
+  // Document Relations
+  uploadedDocuments SupportingDocument[]
+
   @@map("users")
 }
 
@@ -771,6 +774,44 @@ model IntegrationEvent {
   @@index([eventType])
   @@index([processed])
   @@map("integration_events")
+}
+
+// =============================================================================
+// SUPPORTING DOCUMENTS
+// =============================================================================
+
+enum DocumentCategory {
+  TEMPLATE
+  POLICY
+  SAMPLE
+  TRAINING
+  LEGAL
+  GENERAL
+}
+
+model SupportingDocument {
+  id              String            @id @default(uuid())
+  filename        String
+  originalName    String            @map("original_name")
+  category        DocumentCategory  @default(GENERAL)
+  description     String?
+  size            Int               // bytes
+  mimeType        String            @map("mime_type")
+  storageKey      String            @map("storage_key")
+  storageUrl      String?           @map("storage_url")
+  storageType     String            @default("local") @map("storage_type") // local or s3
+
+  // Relations
+  uploadedById    String?           @map("uploaded_by_id")
+  uploadedBy      User?             @relation(fields: [uploadedById], references: [id])
+
+  // Timestamps
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@index([category])
+  @@index([uploadedById])
+  @@map("supporting_documents")
 }
 
 // =============================================================================

@@ -5,10 +5,40 @@
 
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
 const { prisma } = require('../config/database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { createPropertySchema, createProviderSchema } = require('../utils/validators');
 const logger = require('../utils/logger');
+const documentsController = require('../controllers/documentsController');
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB max
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'text/csv',
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp'
+    ];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type ${file.mimetype} not allowed`), false);
+    }
+  }
+});
 
 const router = express.Router();
 
@@ -714,5 +744,45 @@ router.get('/webhook-events', async (req, res) => {
     });
   }
 });
+
+// =============================================================================
+// SUPPORTING DOCUMENTS
+// =============================================================================
+
+/**
+ * GET /api/admin/documents
+ * Get all supporting documents
+ */
+router.get('/documents', documentsController.getDocuments);
+
+/**
+ * POST /api/admin/documents/upload
+ * Upload a new supporting document
+ */
+router.post('/documents/upload', upload.single('file'), documentsController.uploadDocument);
+
+/**
+ * GET /api/admin/documents/:id
+ * Get a specific document
+ */
+router.get('/documents/:id', documentsController.getDocumentById);
+
+/**
+ * GET /api/admin/documents/:id/download
+ * Download a document
+ */
+router.get('/documents/:id/download', documentsController.downloadDocument);
+
+/**
+ * PATCH /api/admin/documents/:id
+ * Update document metadata
+ */
+router.patch('/documents/:id', documentsController.updateDocument);
+
+/**
+ * DELETE /api/admin/documents/:id
+ * Delete a document
+ */
+router.delete('/documents/:id', documentsController.deleteDocument);
 
 module.exports = router;

@@ -32,7 +32,13 @@ import {
   Database,
   HardDrive,
   Link,
-  ExternalLink
+  ExternalLink,
+  Upload,
+  Image,
+  File,
+  Trash2,
+  Download,
+  FolderOpen
 } from 'lucide-react';
 
 export default function Settings() {
@@ -128,6 +134,13 @@ export default function Settings() {
 
   const [newEmail, setNewEmail] = useState('');
   const [selectedDisputeType, setSelectedDisputeType] = useState('fraud');
+
+  // Supporting Documents State
+  const [supportingDocuments, setSupportingDocuments] = useState([]);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [docDescription, setDocDescription] = useState('');
+  const [docCategory, setDocCategory] = useState('TEMPLATE');
 
   // Load configuration on mount
   useEffect(() => {
@@ -233,6 +246,148 @@ export default function Settings() {
   };
 
   const totalWeight = Object.values(evidenceWeights).reduce((a, b) => a + b, 0);
+
+  // Document Categories
+  const documentCategories = [
+    { value: 'TEMPLATE', label: 'Evidence Template', description: 'Reusable template for evidence collection' },
+    { value: 'POLICY', label: 'Policy Document', description: 'Hotel policies (cancellation, damages, etc.)' },
+    { value: 'SAMPLE', label: 'Sample Evidence', description: 'Sample evidence for reference' },
+    { value: 'TRAINING', label: 'Training Material', description: 'Training guides and documentation' },
+    { value: 'LEGAL', label: 'Legal Document', description: 'Terms, agreements, or legal notices' }
+  ];
+
+  // Handle file drag events
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  // Handle file drop
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    const files = [...e.dataTransfer.files];
+    if (files.length > 0) {
+      await handleDocumentUpload(files);
+    }
+  };
+
+  // Handle file selection via input
+  const handleFileSelect = async (e) => {
+    const files = [...e.target.files];
+    if (files.length > 0) {
+      await handleDocumentUpload(files);
+    }
+    e.target.value = ''; // Reset input
+  };
+
+  // Upload documents
+  const handleDocumentUpload = async (files) => {
+    setUploadingDocs(true);
+    setMessage(null);
+
+    try {
+      const uploadedDocs = [];
+
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('category', docCategory);
+        formData.append('description', docDescription || file.name);
+
+        try {
+          const response = await api.post('/admin/documents/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          uploadedDocs.push(response.data.document);
+        } catch (error) {
+          console.error(`Failed to upload ${file.name}:`, error);
+        }
+      }
+
+      if (uploadedDocs.length > 0) {
+        setSupportingDocuments(prev => [...uploadedDocs, ...prev]);
+        setMessage({ type: 'success', text: `${uploadedDocs.length} document(s) uploaded successfully!` });
+        setDocDescription('');
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to upload documents' });
+    } finally {
+      setUploadingDocs(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
+  };
+
+  // Load supporting documents
+  const loadSupportingDocuments = async () => {
+    try {
+      const response = await api.get('/admin/documents');
+      setSupportingDocuments(response.data.documents || []);
+    } catch (error) {
+      console.error('Failed to load documents:', error);
+    }
+  };
+
+  // Delete document
+  const deleteDocument = async (docId) => {
+    try {
+      await api.delete(`/admin/documents/${docId}`);
+      setSupportingDocuments(prev => prev.filter(d => d.id !== docId));
+      setMessage({ type: 'success', text: 'Document deleted successfully' });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to delete document' });
+    }
+  };
+
+  // Download document
+  const downloadDocument = async (doc) => {
+    try {
+      const response = await api.get(`/admin/documents/${doc.id}/download`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', doc.filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to download document' });
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (filename) => {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return Image;
+    if (['pdf', 'doc', 'docx', 'txt'].includes(ext)) return FileText;
+    return File;
+  };
+
+  // Load documents when defense tab is active
+  useEffect(() => {
+    if (activeTab === 'defense' && user?.role === 'ADMIN') {
+      loadSupportingDocuments();
+    }
+  }, [activeTab, user]);
 
   const evidenceTypes = [
     { id: 'ID_SCAN', label: 'ID Scan', description: 'Government-issued photo ID of the guest' },
@@ -771,6 +926,194 @@ export default function Settings() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            </div>
+
+            {/* Supporting Documents Upload Section */}
+            <div className="card">
+              <div className="card-header border-b-0 pb-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-emerald-100 rounded-lg">
+                    <FolderOpen className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Supporting Documents</h3>
+                    <p className="text-sm text-gray-500">Upload templates, policies, and reference documents for evidence collection</p>
+                  </div>
+                </div>
+              </div>
+              <div className="card-body pt-4 space-y-6">
+                {/* Upload Configuration */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Document Category</label>
+                    <select
+                      value={docCategory}
+                      onChange={(e) => setDocCategory(e.target.value)}
+                      className="input"
+                    >
+                      {documentCategories.map((cat) => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.label} - {cat.description}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Description (Optional)</label>
+                    <input
+                      type="text"
+                      value={docDescription}
+                      onChange={(e) => setDocDescription(e.target.value)}
+                      placeholder="Enter a description for the document..."
+                      className="input"
+                    />
+                  </div>
+                </div>
+
+                {/* Drag & Drop Upload Zone */}
+                <div
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                    dragActive
+                      ? 'border-emerald-500 bg-emerald-50'
+                      : 'border-gray-300 hover:border-emerald-400 hover:bg-emerald-50/50'
+                  }`}
+                >
+                  <input
+                    type="file"
+                    id="doc-upload"
+                    multiple
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.xlsx,.xls,.csv"
+                    onChange={handleFileSelect}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="flex flex-col items-center">
+                    {uploadingDocs ? (
+                      <>
+                        <RefreshCw className="w-12 h-12 text-emerald-500 animate-spin mb-3" />
+                        <p className="text-lg font-medium text-gray-700">Uploading documents...</p>
+                      </>
+                    ) : (
+                      <>
+                        <div className={`p-4 rounded-full mb-4 transition-colors ${
+                          dragActive ? 'bg-emerald-100' : 'bg-gray-100'
+                        }`}>
+                          <Upload className={`w-8 h-8 ${dragActive ? 'text-emerald-600' : 'text-gray-400'}`} />
+                        </div>
+                        <p className="text-lg font-medium text-gray-700">
+                          {dragActive ? 'Drop files here...' : 'Drag & drop files here'}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          or <span className="text-emerald-600 font-medium cursor-pointer hover:underline">browse</span> to select files
+                        </p>
+                        <p className="text-xs text-gray-400 mt-3">
+                          Supports: PDF, DOC, DOCX, TXT, JPG, PNG, GIF, Excel files
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Uploaded Documents List */}
+                {supportingDocuments.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-medium text-gray-800">
+                        Uploaded Documents ({supportingDocuments.length})
+                      </h4>
+                      <button
+                        onClick={loadSupportingDocuments}
+                        className="text-sm text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        Refresh
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {supportingDocuments.map((doc) => {
+                        const FileIcon = getFileIcon(doc.filename);
+                        return (
+                          <div
+                            key={doc.id}
+                            className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <div className="p-2 bg-white rounded-lg border border-gray-200">
+                                <FileIcon className="w-5 h-5 text-gray-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-800 truncate" title={doc.filename}>
+                                  {doc.filename}
+                                </p>
+                                <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
+                                    {documentCategories.find(c => c.value === doc.category)?.label || doc.category}
+                                  </span>
+                                  <span>{formatFileSize(doc.size)}</span>
+                                  {doc.uploadedAt && (
+                                    <span>
+                                      {new Date(doc.uploadedAt).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
+                                {doc.description && (
+                                  <p className="text-xs text-gray-400 mt-1 truncate" title={doc.description}>
+                                    {doc.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                              <button
+                                onClick={() => downloadDocument(doc)}
+                                className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                title="Download"
+                              >
+                                <Download className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => deleteDocument(doc.id)}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {supportingDocuments.length === 0 && !uploadingDocs && (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <FolderOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">No supporting documents uploaded yet</p>
+                    <p className="text-sm text-gray-400 mt-1">
+                      Upload policy documents, templates, or sample evidence above
+                    </p>
+                  </div>
+                )}
+
+                {/* Usage Tips */}
+                <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl border border-emerald-100">
+                  <h5 className="font-medium text-emerald-800 mb-2 flex items-center gap-2">
+                    <Info className="w-4 h-4" />
+                    Document Usage Tips
+                  </h5>
+                  <ul className="text-sm text-emerald-700 space-y-1">
+                    <li>• <strong>Templates:</strong> Upload blank forms for consistent evidence collection</li>
+                    <li>• <strong>Policies:</strong> Store cancellation, damage, and other hotel policies</li>
+                    <li>• <strong>Sample Evidence:</strong> Reference examples for training staff</li>
+                    <li>• <strong>Legal Documents:</strong> Terms, agreements, and compliance documents</li>
+                  </ul>
                 </div>
               </div>
             </div>
