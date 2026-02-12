@@ -14,6 +14,7 @@ import CaseDetail from './pages/CaseDetail';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import PMSIntegration from './pages/PMSIntegration';
+import DisputeIntegration from './pages/DisputeIntegration';
 import TutorialPage from './pages/Tutorial';
 
 // Protected Route wrapper
@@ -91,6 +92,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PMSIntegration />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/disputes"
+          element={
+            <ProtectedRoute>
+              <DisputeIntegration />
             </ProtectedRoute>
           }
         />

@@ -575,4 +575,189 @@ router.post('/elavon', async (req, res) => {
   }
 });
 
+// =============================================================================
+// DISPUTE COMPANY WEBHOOKS
+// =============================================================================
+
+const { disputeWebhookHandlers, DisputeCompanyService, DISPUTE_COMPANIES } = require('../services/disputeCompanies');
+
+/**
+ * Generic webhook handler for dispute companies
+ */
+async function handleDisputeCompanyWebhook(req, res, companyId) {
+  try {
+    const signature = req.headers['x-signature'] || req.headers['x-webhook-signature'];
+    const payload = req.body;
+
+    logger.info(`AccuDefend Webhook: ${companyId} event received`);
+
+    // Get company config
+    const company = DISPUTE_COMPANIES[companyId.toUpperCase()];
+    if (!company) {
+      return res.status(400).json({ error: 'Unknown dispute company' });
+    }
+
+    // Find integration
+    const integration = await prisma.integration.findFirst({
+      where: { type: companyId.toLowerCase(), status: 'active' }
+    });
+
+    // Log webhook event
+    if (integration) {
+      await prisma.integrationEvent.create({
+        data: {
+          integrationId: integration.id,
+          eventType: payload.event || payload.type || 'webhook',
+          direction: 'inbound',
+          payload,
+          processed: false
+        }
+      });
+    }
+
+    // Process the webhook
+    const event = typeof payload === 'string' ? JSON.parse(payload) : payload;
+
+    if (disputeWebhookHandlers[companyId.toLowerCase()]) {
+      await disputeWebhookHandlers[companyId.toLowerCase()](
+        event,
+        signature,
+        integration?.webhookSecret
+      );
+    }
+
+    // Mark as processed
+    if (integration) {
+      await prisma.integrationEvent.updateMany({
+        where: {
+          integrationId: integration.id,
+          processed: false
+        },
+        data: {
+          processed: true,
+          processedAt: new Date()
+        }
+      });
+    }
+
+    res.json({ received: true, company: companyId });
+
+  } catch (error) {
+    logger.error(`${companyId} webhook error:`, error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+}
+
+/**
+ * POST /api/webhooks/merlink
+ * Handle Merlink dispute webhooks (2-way sync)
+ */
+router.post('/merlink', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'merlink');
+});
+
+/**
+ * POST /api/webhooks/staysettle
+ * Handle StaySettle dispute webhooks
+ */
+router.post('/staysettle', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'staysettle');
+});
+
+/**
+ * POST /api/webhooks/winchargebacks
+ * Handle Win Chargebacks webhooks
+ */
+router.post('/winchargebacks', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'win_chargebacks');
+});
+
+/**
+ * POST /api/webhooks/chargebackgurus
+ * Handle Chargeback Gurus webhooks
+ */
+router.post('/chargebackgurus', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'chargeback_gurus');
+});
+
+/**
+ * POST /api/webhooks/chargebackhelp
+ * Handle ChargebackHelp webhooks
+ */
+router.post('/chargebackhelp', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'chargebackhelp');
+});
+
+/**
+ * POST /api/webhooks/clearview
+ * Handle Clearview/Chargeback Shield webhooks
+ */
+router.post('/clearview', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'clearview');
+});
+
+/**
+ * POST /api/webhooks/verifi
+ * Handle Verifi (Visa) webhooks
+ */
+router.post('/verifi', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'verifi');
+});
+
+/**
+ * POST /api/webhooks/ethoca
+ * Handle Ethoca (Mastercard) webhooks
+ */
+router.post('/ethoca', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'ethoca');
+});
+
+/**
+ * POST /api/webhooks/chargebacks911
+ * Handle Chargebacks911 webhooks
+ */
+router.post('/chargebacks911', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'chargebacks911');
+});
+
+/**
+ * POST /api/webhooks/riskified
+ * Handle Riskified webhooks
+ */
+router.post('/riskified', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'riskified');
+});
+
+/**
+ * POST /api/webhooks/chargeblast
+ * Handle Chargeblast webhooks
+ */
+router.post('/chargeblast', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'chargeblast');
+});
+
+/**
+ * POST /api/webhooks/midigator
+ * Handle Midigator webhooks
+ */
+router.post('/midigator', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'midigator');
+});
+
+/**
+ * POST /api/webhooks/cavu
+ * Handle CAVU webhooks
+ */
+router.post('/cavu', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'cavu');
+});
+
+/**
+ * POST /api/webhooks/tailoredpay
+ * Handle TailoredPay webhooks
+ */
+router.post('/tailoredpay', async (req, res) => {
+  await handleDisputeCompanyWebhook(req, res, 'tailoredpay');
+});
+
 module.exports = router;

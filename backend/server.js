@@ -28,6 +28,7 @@ const webhooksRoutes = require('./routes/webhooks');
 const adminRoutes = require('./routes/admin');
 const pmsRoutes = require('./routes/pms');
 const notificationsRoutes = require('./routes/notifications');
+const disputesRoutes = require('./routes/disputes');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -149,6 +150,7 @@ app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/pms', pmsRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/disputes', disputesRoutes);
 
 // API documentation redirect
 app.get('/api', (req, res) => {
@@ -164,7 +166,8 @@ app.get('/api', (req, res) => {
       webhooks: '/api/webhooks',
       admin: '/api/admin',
       pms: '/api/pms',
-      notifications: '/api/notifications'
+      notifications: '/api/notifications',
+      disputes: '/api/disputes'
     }
   });
 });
