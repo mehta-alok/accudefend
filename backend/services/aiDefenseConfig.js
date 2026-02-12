@@ -26,14 +26,16 @@ const DEFAULT_AI_CONFIG = {
 
   // Evidence Weights (total should equal 100)
   evidenceWeights: {
-    ID_SCAN: 20,
-    AUTH_SIGNATURE: 20,
-    CHECKOUT_SIGNATURE: 15,
-    FOLIO: 15,
-    KEY_CARD_LOG: 10,
-    CORRESPONDENCE: 10,
-    CCTV_FOOTAGE: 5,
-    CANCELLATION_POLICY: 5
+    ID_SCAN: 18,
+    AUTH_SIGNATURE: 18,
+    CHECKOUT_SIGNATURE: 12,
+    FOLIO: 14,
+    KEY_CARD_LOG: 8,
+    CORRESPONDENCE: 8,
+    CCTV_FOOTAGE: 4,
+    CANCELLATION_POLICY: 4,
+    POLICE_REPORT: 8,
+    NO_SHOW_DOCUMENTATION: 6
   },
 
   // Fraud Detection Settings
@@ -91,9 +93,30 @@ const DEFAULT_AI_CONFIG = {
     CANCELLED_RESERVATION: {
       name: 'Cancelled Reservation Defense',
       requiredEvidence: ['CANCELLATION_POLICY', 'CORRESPONDENCE'],
-      recommendedEvidence: ['FOLIO'],
+      recommendedEvidence: ['FOLIO', 'NO_SHOW_DOCUMENTATION'],
       responseTemplate: 'cancellation_defense',
       priority: 5
+    },
+    NO_SHOW: {
+      name: 'No Show Defense',
+      requiredEvidence: ['CANCELLATION_POLICY', 'NO_SHOW_DOCUMENTATION', 'FOLIO'],
+      recommendedEvidence: ['CORRESPONDENCE', 'RESERVATION_CONFIRMATION'],
+      responseTemplate: 'no_show_defense',
+      priority: 6
+    },
+    GUEST_BEHAVIOR_ABUSE: {
+      name: 'Guest Behavior/Abuse Defense',
+      requiredEvidence: ['FOLIO', 'INCIDENT_REPORT'],
+      recommendedEvidence: ['POLICE_REPORT', 'CCTV_FOOTAGE', 'DAMAGE_PHOTOS', 'CORRESPONDENCE'],
+      responseTemplate: 'behavior_abuse_defense',
+      priority: 7
+    },
+    IDENTITY_FRAUD: {
+      name: 'Identity Fraud Defense',
+      requiredEvidence: ['ID_SCAN', 'AUTH_SIGNATURE', 'CCTV_FOOTAGE'],
+      recommendedEvidence: ['FOLIO', 'KEY_CARD_LOG', 'POLICE_REPORT'],
+      responseTemplate: 'identity_fraud_defense',
+      priority: 8
     }
   },
 
