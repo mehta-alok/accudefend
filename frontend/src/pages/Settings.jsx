@@ -1176,7 +1176,7 @@ export default function Settings() {
       </div>
 
       <div className="text-center text-sm text-gray-400 py-4">
-        AccuDefend - Hotel Chargeback Defense System v1.0.0
+        AccuDefend - AI-Powered Chargeback Defense Platform v1.0.0
       </div>
     </div>
   );

@@ -26,7 +26,8 @@ import {
   Sun,
   Moon,
   Sunrise,
-  Link2
+  Link2,
+  BookOpen
 } from 'lucide-react';
 
 const navigation = [
@@ -35,6 +36,7 @@ const navigation = [
   { name: 'PMS Integration', href: '/pms', icon: Link2 },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Tutorial', href: '/tutorial', icon: BookOpen },
   { name: 'Help & Tutorial', href: '#help', icon: HelpCircle, isHelp: true }
 ];
 
@@ -370,8 +372,8 @@ export default function Layout({ children }) {
 
         {/* Footer */}
         <footer className="px-4 py-6 text-center text-sm text-gray-500 lg:px-8">
-          <p>AccuDefend - Hotel Chargeback Defense System</p>
-          <p className="mt-1">Powered by AccuDefend Technology</p>
+          <p>AccuDefend - AI-Powered Chargeback Defense Platform</p>
+          <p className="mt-1">&copy; 2026 AccuDefend. All rights reserved.</p>
         </footer>
       </div>
 

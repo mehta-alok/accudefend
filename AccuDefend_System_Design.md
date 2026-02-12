@@ -1,6 +1,6 @@
 # AccuDefend - System Design Document
 
-## Hotel Chargeback Defense System
+## AI-Powered Chargeback Defense Platform
 
 **Version:** 1.0.0
 **Last Updated:** February 2026
@@ -1458,7 +1458,7 @@ volumes:
 ### 15.3 File Structure
 
 ```
-Hotel.Chargeback.Fraud_OMNI/
+accudefend/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/

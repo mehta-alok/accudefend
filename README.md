@@ -73,8 +73,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/accudefend/chargeback-defense.git
-cd chargeback-defense
+git clone https://github.com/mehta-alok/accudefend.git
+cd accudefend
 
 # Start infrastructure
 docker-compose up -d postgres redis
@@ -248,7 +248,7 @@ AccuDefend includes a built-in **interactive tutorial** and **contextual help sy
 ## Project Structure
 
 ```
-Hotel.Chargeback.Fraud_OMNI/
+accudefend/
 ├── backend/
 │   ├── config/           # Database, Redis, S3 configuration
 │   ├── middleware/       # Authentication middleware
@@ -429,6 +429,6 @@ For technical support, contact:
 
 <div align="center">
   <p><strong>AccuDefend</strong></p>
-  <p>Hotel Chargeback Defense System</p>
-  <p>&copy; 2025 AccuDefend. All rights reserved.</p>
+  <p>AI-Powered Chargeback Defense Platform</p>
+  <p>&copy; 2026 AccuDefend. All rights reserved.</p>
 </div>
