@@ -1462,26 +1462,64 @@ accudefend/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
+│   │   │   ├── Layout.jsx          # Main layout with sidebar
+│   │   │   └── Tutorial.jsx        # Tutorial & Help system
 │   │   ├── pages/
+│   │   │   ├── Dashboard.jsx       # Main dashboard
+│   │   │   ├── Cases.jsx           # Case list
+│   │   │   ├── CaseDetail.jsx      # Case details
+│   │   │   ├── Analytics.jsx       # Reports
+│   │   │   ├── Settings.jsx        # Configuration
+│   │   │   ├── PMSIntegration.jsx  # PMS connections
+│   │   │   └── Login.jsx           # Authentication
 │   │   ├── hooks/
+│   │   │   └── useAuth.jsx         # Auth context
 │   │   └── utils/
+│   │       └── api.js              # API client
+│   ├── .env                        # Frontend config
 │   ├── package.json
 │   └── vite.config.js
 │
 ├── backend/
 │   ├── config/
+│   │   ├── database.js             # Prisma setup
+│   │   ├── redis.js                # Redis connection
+│   │   ├── s3.js                   # AWS S3 config
+│   │   └── storage.js              # Storage abstraction
 │   ├── middleware/
+│   │   └── auth.js                 # JWT middleware
 │   ├── routes/
+│   │   ├── auth.js                 # Authentication
+│   │   ├── cases.js                # Chargeback CRUD
+│   │   ├── evidence.js             # File uploads
+│   │   ├── analytics.js            # Reports
+│   │   ├── admin.js                # Admin functions
+│   │   ├── webhooks.js             # Payment webhooks
+│   │   └── pms.js                  # PMS integration
 │   ├── services/
+│   │   ├── fraudDetection.js       # AI analysis
+│   │   ├── aiDefenseConfig.js      # AI configuration
+│   │   ├── pmsIntegration.js       # PMS connections
+│   │   ├── pmsSyncService.js       # PMS sync
+│   │   ├── aiAgents.js             # AI agents
+│   │   ├── backlog.js              # Backlog management
+│   │   └── integrations.js         # Third-party integrations
 │   ├── utils/
+│   │   ├── logger.js               # Winston logging
+│   │   └── validators.js           # Zod schemas
 │   ├── prisma/
-│   ├── uploads/
-│   ├── .env
+│   │   ├── schema.prisma           # Database schema
+│   │   └── seed.js                 # Initial data
+│   ├── uploads/                    # Local file storage
+│   ├── .env                        # Backend config
+│   ├── .env.example                # Config template
+│   ├── Dockerfile                  # Container build
 │   └── package.json
 │
-├── preview.html
-├── .gitignore
-└── AccuDefend_System_Design.md
+├── docker-compose.yml              # Container orchestration
+├── DEPLOYMENT.md                   # Deployment guide
+├── README.md                       # Project documentation
+└── AccuDefend_System_Design.md     # System architecture
 ```
 
 ### 15.4 Quick Start Commands

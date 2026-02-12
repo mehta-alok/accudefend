@@ -1,5 +1,5 @@
 /**
- * AccuDefend - Hotel Chargeback Defense System
+ * AccuDefend - AI-Powered Chargeback Defense Platform
  * Dashboard Page
  */
 
@@ -15,7 +15,11 @@ import {
   DollarSign,
   FileText,
   ArrowRight,
-  RefreshCw
+  RefreshCw,
+  Zap,
+  Sliders,
+  FileCheck,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { api, formatCurrency, formatDate, getStatusColor } from '../utils/api';
 
@@ -23,6 +27,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [settings, setSettings] = useState({
+    autoSubmitThreshold: 80,
+    autoSubmitEnabled: true,
+    instantAutoSubmit: false,
+    requiredEvidence: ['ID_SCAN', 'AUTH_SIGNATURE', 'CHECKOUT_SIGNATURE', 'FOLIO']
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -39,6 +49,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchData();
+    const savedSettings = localStorage.getItem('accudefendSettings');
+    if (savedSettings) {
+      try {
+        setSettings(JSON.parse(savedSettings));
+      } catch (e) {
+        // Ignore invalid JSON
+      }
+    }
   }, []);
 
   if (loading && !data) {
@@ -258,6 +276,81 @@ export default function Dashboard() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* AI Status Banner */}
+      <div className="card card-body bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${settings.autoSubmitEnabled ? 'bg-green-500/20' : 'bg-gray-500/20'}`}>
+              <Zap className={`w-5 h-5 ${settings.autoSubmitEnabled ? 'text-green-400' : 'text-gray-400'}`} />
+            </div>
+            <div>
+              <h3 className="font-semibold">AI Defense {settings.autoSubmitEnabled ? 'Active' : 'Paused'}</h3>
+              <p className="text-sm text-gray-400">
+                {settings.autoSubmitEnabled
+                  ? `Auto-submit enabled for ${settings.autoSubmitThreshold}%+ confidence`
+                  : 'Auto-submit disabled'}
+              </p>
+            </div>
+          </div>
+          <Link to="/settings" className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+            <SettingsIcon className="w-5 h-5" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Quick Settings Widget */}
+      <div className="card">
+        <div className="card-header flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Sliders className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-semibold">AI Configuration</h2>
+          </div>
+          <Link to="/settings" className="text-sm text-blue-600 hover:text-blue-700">
+            Edit Settings
+          </Link>
+        </div>
+        <div className="card-body">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-gray-700">Auto-Submit Threshold</p>
+                <span className="text-lg font-bold">{settings.autoSubmitThreshold}%</span>
+              </div>
+              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-blue-500"
+                  style={{ width: `${settings.autoSubmitThreshold}%` }}
+                />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Instant Auto-Submit</p>
+              <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${
+                settings.instantAutoSubmit && settings.autoSubmitEnabled
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {settings.instantAutoSubmit && settings.autoSubmitEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Required Evidence</p>
+              <div className="flex flex-wrap gap-1">
+                {(settings.requiredEvidence || []).slice(0, 3).map((ev) => (
+                  <span key={ev} className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-green-50 text-green-700">
+                    <FileCheck className="w-3 h-3" />
+                    {ev.replace(/_/g, ' ')}
+                  </span>
+                ))}
+                {(settings.requiredEvidence || []).length > 3 && (
+                  <span className="text-xs text-gray-500">+{settings.requiredEvidence.length - 3} more</span>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

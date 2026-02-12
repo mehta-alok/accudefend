@@ -1,5 +1,5 @@
 /**
- * AccuDefend - Hotel Chargeback Defense System
+ * AccuDefend - AI-Powered Chargeback Defense Platform
  * Main Application Component
  */
 
@@ -14,6 +14,7 @@ import CaseDetail from './pages/CaseDetail';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import PMSIntegration from './pages/PMSIntegration';
+import TutorialPage from './pages/Tutorial';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -90,6 +91,14 @@ function App() {
           element={
             <ProtectedRoute>
               <PMSIntegration />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tutorial"
+          element={
+            <ProtectedRoute>
+              <TutorialPage />
             </ProtectedRoute>
           }
         />

@@ -1,5 +1,5 @@
 /**
- * AccuDefend - Hotel Chargeback Defense System
+ * AccuDefend - AI-Powered Chargeback Defense Platform
  * Zod Validation Schemas
  */
 

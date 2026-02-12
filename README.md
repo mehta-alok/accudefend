@@ -1,4 +1,4 @@
-# AccuDefend - Hotel Chargeback Defense System
+# AccuDefend - AI-Powered Chargeback Defense Platform
 
 <div align="center">
 

@@ -1,5 +1,5 @@
 /**
- * AccuDefend - Hotel Chargeback Defense System
+ * AccuDefend - AI-Powered Chargeback Defense Platform
  * Chargeback Cases Routes
  */
 
@@ -325,6 +325,97 @@ router.post('/', requireRole('ADMIN', 'MANAGER', 'STAFF'), async (req, res) => {
     res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to create case'
+    });
+  }
+});
+
+/**
+ * POST /api/cases/:id/submit
+ * Submit case to payment processor
+ */
+router.post('/:id/submit', requireRole('ADMIN', 'MANAGER', 'STAFF'), async (req, res) => {
+  try {
+    const { notes } = req.body;
+
+    const chargeback = await prisma.chargeback.findFirst({
+      where: {
+        id: req.params.id,
+        ...req.propertyFilter
+      },
+      include: {
+        provider: true,
+        evidence: true,
+      },
+    });
+
+    if (!chargeback) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Chargeback not found'
+      });
+    }
+
+    if (chargeback.status !== 'PENDING' && chargeback.status !== 'IN_REVIEW') {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Case has already been submitted or resolved'
+      });
+    }
+
+    // Create submission record
+    const submission = await prisma.disputeSubmission.create({
+      data: {
+        chargebackId: chargeback.id,
+        processorId: chargeback.provider?.id,
+        status: 'SENT',
+        requestJson: {
+          caseNumber: chargeback.caseNumber,
+          processorCaseId: chargeback.processorCaseId,
+          amount: parseFloat(chargeback.amount),
+          evidenceCount: chargeback.evidence.length,
+          submittedBy: req.user.email,
+          notes,
+        },
+      },
+    });
+
+    // Update case status
+    const updatedChargeback = await prisma.chargeback.update({
+      where: { id: chargeback.id },
+      data: {
+        status: 'SUBMITTED',
+        submittedAt: new Date(),
+      },
+      include: {
+        property: { select: { id: true, name: true } },
+        provider: { select: { id: true, name: true } }
+      }
+    });
+
+    // Create timeline event
+    await prisma.timelineEvent.create({
+      data: {
+        chargebackId: chargeback.id,
+        eventType: 'SYSTEM',
+        title: 'Case Submitted',
+        description: `Submitted to ${chargeback.provider?.name || 'processor'} by ${req.user.firstName} ${req.user.lastName}`,
+        metadata: { submissionId: submission.id }
+      }
+    });
+
+    logger.info(`Case submitted: ${chargeback.caseNumber} by ${req.user.email}`);
+
+    res.json({
+      message: 'Case submitted successfully',
+      chargeback: updatedChargeback,
+      submission
+    });
+
+  } catch (error) {
+    logger.error('Submit case error:', error);
+    res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to submit case'
     });
   }
 });

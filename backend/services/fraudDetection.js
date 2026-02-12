@@ -1,5 +1,5 @@
 /**
- * AccuDefend Chargeback Defense System
+ * AccuDefend - AI-Powered Chargeback Defense Platform
  * AI Fraud Detection Engine
  *
  * Analyzes chargebacks and calculates confidence scores
@@ -404,10 +404,39 @@ async function reanalyzeAllPending() {
   return analyzeMultiple(pending.map(c => c.id));
 }
 
+/**
+ * Get risk assessment summary for a property's cases
+ * @param {Array} cases - Array of chargeback objects (must have confidenceScore)
+ * @returns {Object|null} Property risk summary
+ */
+function getPropertyRiskSummary(cases) {
+  const total = cases.length;
+  if (total === 0) return null;
+
+  const byRisk = { LOW: 0, MEDIUM: 0, HIGH: 0 };
+
+  for (const c of cases) {
+    const score = c.confidenceScore || 0;
+    if (score >= 75) byRisk.LOW++;
+    else if (score >= 50) byRisk.MEDIUM++;
+    else byRisk.HIGH++;
+  }
+
+  const avgConfidence = cases.reduce((sum, c) => sum + (c.confidenceScore || 0), 0) / total;
+
+  return {
+    totalCases: total,
+    byRiskLevel: byRisk,
+    averageConfidence: Math.round(avgConfidence),
+    highRiskPercentage: total > 0 ? Math.round((byRisk.HIGH / total) * 100) : 0,
+  };
+}
+
 module.exports = {
   analyzeChargeback,
   analyzeMultiple,
   reanalyzeAllPending,
+  getPropertyRiskSummary,
   REASON_CODE_WIN_RATES,
   EVIDENCE_WEIGHTS,
   FRAUD_INDICATORS

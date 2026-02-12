@@ -1,5 +1,5 @@
 /**
- * AccuDefend - Hotel Chargeback Defense System
+ * AccuDefend - AI-Powered Chargeback Defense Platform
  * File Storage Configuration (Local + S3 support)
  *
  * Uses local storage by default, or S3 if configured
