@@ -27,6 +27,7 @@ const analyticsRoutes = require('./routes/analytics');
 const webhooksRoutes = require('./routes/webhooks');
 const adminRoutes = require('./routes/admin');
 const pmsRoutes = require('./routes/pms');
+const notificationsRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -147,6 +148,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/pms', pmsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // API documentation redirect
 app.get('/api', (req, res) => {
@@ -161,7 +163,8 @@ app.get('/api', (req, res) => {
       analytics: '/api/analytics',
       webhooks: '/api/webhooks',
       admin: '/api/admin',
-      pms: '/api/pms'
+      pms: '/api/pms',
+      notifications: '/api/notifications'
     }
   });
 });

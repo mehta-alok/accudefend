@@ -1,0 +1,236 @@
+/**
+ * AccuDefend - AI-Powered Chargeback Defense Platform
+ * Notifications Controller - User Notifications Management
+ */
+
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+const logger = require('../utils/logger');
+const { v4: uuidv4 } = require('uuid');
+
+/**
+ * Get all notifications for the current user
+ */
+const getNotifications = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { limit = 20, unreadOnly = false, offset = 0 } = req.query;
+
+    const where = {
+      userId,
+      ...(unreadOnly === 'true' && { isRead: false })
+    };
+
+    const [notifications, total, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: parseInt(limit),
+        skip: parseInt(offset)
+      }),
+      prisma.notification.count({ where }),
+      prisma.notification.count({
+        where: { userId, isRead: false }
+      })
+    ]);
+
+    res.json({
+      success: true,
+      notifications: notifications.map(n => ({
+        id: n.id,
+        type: n.type,
+        priority: n.priority,
+        title: n.title,
+        message: n.message,
+        link: n.link,
+        isRead: n.isRead,
+        readAt: n.readAt,
+        metadata: n.metadata,
+        createdAt: n.createdAt
+      })),
+      total,
+      unreadCount
+    });
+  } catch (error) {
+    logger.error('Failed to fetch notifications:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch notifications' });
+  }
+};
+
+/**
+ * Get unread notification count
+ */
+const getUnreadCount = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const count = await prisma.notification.count({
+      where: { userId, isRead: false }
+    });
+
+    res.json({ success: true, count });
+  } catch (error) {
+    logger.error('Failed to fetch unread count:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch unread count' });
+  }
+};
+
+/**
+ * Mark notification as read
+ */
+const markAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const notification = await prisma.notification.findFirst({
+      where: { id, userId }
+    });
+
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+
+    const updated = await prisma.notification.update({
+      where: { id },
+      data: { isRead: true, readAt: new Date() }
+    });
+
+    res.json({
+      success: true,
+      notification: {
+        id: updated.id,
+        isRead: updated.isRead,
+        readAt: updated.readAt
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to mark notification as read:', error);
+    res.status(500).json({ success: false, error: 'Failed to mark notification as read' });
+  }
+};
+
+/**
+ * Mark all notifications as read
+ */
+const markAllAsRead = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await prisma.notification.updateMany({
+      where: { userId, isRead: false },
+      data: { isRead: true, readAt: new Date() }
+    });
+
+    res.json({ success: true, message: 'All notifications marked as read' });
+  } catch (error) {
+    logger.error('Failed to mark all notifications as read:', error);
+    res.status(500).json({ success: false, error: 'Failed to mark all notifications as read' });
+  }
+};
+
+/**
+ * Delete a notification
+ */
+const deleteNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const notification = await prisma.notification.findFirst({
+      where: { id, userId }
+    });
+
+    if (!notification) {
+      return res.status(404).json({ success: false, error: 'Notification not found' });
+    }
+
+    await prisma.notification.delete({ where: { id } });
+
+    res.json({ success: true, message: 'Notification deleted' });
+  } catch (error) {
+    logger.error('Failed to delete notification:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete notification' });
+  }
+};
+
+/**
+ * Clear all notifications
+ */
+const clearAll = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await prisma.notification.deleteMany({ where: { userId } });
+
+    res.json({ success: true, message: 'All notifications cleared' });
+  } catch (error) {
+    logger.error('Failed to clear notifications:', error);
+    res.status(500).json({ success: false, error: 'Failed to clear notifications' });
+  }
+};
+
+/**
+ * Create a notification (internal use)
+ */
+const createNotification = async (userId, data) => {
+  try {
+    const notification = await prisma.notification.create({
+      data: {
+        id: uuidv4(),
+        userId,
+        type: data.type,
+        priority: data.priority || 'MEDIUM',
+        title: data.title,
+        message: data.message,
+        link: data.link || null,
+        metadata: data.metadata || null,
+        expiresAt: data.expiresAt || null
+      }
+    });
+
+    logger.info(`Notification created for user ${userId}: ${data.title}`);
+    return notification;
+  } catch (error) {
+    logger.error('Failed to create notification:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create notifications for multiple users
+ */
+const createBulkNotifications = async (userIds, data) => {
+  try {
+    const notifications = await prisma.notification.createMany({
+      data: userIds.map(userId => ({
+        id: uuidv4(),
+        userId,
+        type: data.type,
+        priority: data.priority || 'MEDIUM',
+        title: data.title,
+        message: data.message,
+        link: data.link || null,
+        metadata: data.metadata || null,
+        expiresAt: data.expiresAt || null
+      }))
+    });
+
+    logger.info(`Bulk notifications created for ${userIds.length} users: ${data.title}`);
+    return notifications;
+  } catch (error) {
+    logger.error('Failed to create bulk notifications:', error);
+    throw error;
+  }
+};
+
+module.exports = {
+  getNotifications,
+  getUnreadCount,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+  clearAll,
+  createNotification,
+  createBulkNotifications
+};

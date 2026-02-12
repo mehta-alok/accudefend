@@ -450,6 +450,86 @@ async function main() {
   console.log('✓ Created system configuration\n');
 
   // ==========================================================================
+  // CREATE DEMO NOTIFICATIONS
+  // ==========================================================================
+
+  console.log('Creating demo notifications...');
+
+  // Get all admin users for notifications
+  const adminUsers = await prisma.user.findMany({
+    where: { role: 'ADMIN' }
+  });
+
+  if (adminUsers.length > 0) {
+    const demoNotifications = [];
+    const now = new Date();
+
+    adminUsers.forEach(user => {
+      demoNotifications.push(
+        {
+          userId: user.id,
+          type: 'NEW_CHARGEBACK',
+          priority: 'HIGH',
+          title: 'New Chargeback Received',
+          message: 'A new $450.00 chargeback has been filed for case CB-2025-0008. Immediate review recommended.',
+          link: '/cases',
+          isRead: false,
+          createdAt: new Date(now.getTime() - 5 * 60 * 1000) // 5 minutes ago
+        },
+        {
+          userId: user.id,
+          type: 'DEADLINE_WARNING',
+          priority: 'URGENT',
+          title: 'Response Deadline Approaching',
+          message: 'Case CB-2025-0005 response is due in 3 days. Please review and submit evidence.',
+          link: '/cases',
+          isRead: false,
+          createdAt: new Date(now.getTime() - 30 * 60 * 1000) // 30 minutes ago
+        },
+        {
+          userId: user.id,
+          type: 'AI_ANALYSIS_COMPLETE',
+          priority: 'MEDIUM',
+          title: 'AI Analysis Complete',
+          message: 'Case CB-2025-0006 analysis finished with 87% confidence score. Auto-submit criteria met.',
+          link: '/cases',
+          isRead: false,
+          createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000) // 2 hours ago
+        },
+        {
+          userId: user.id,
+          type: 'SUBMISSION_RESULT',
+          priority: 'MEDIUM',
+          title: 'Dispute Response Submitted',
+          message: 'Case CB-2025-0003 response has been successfully submitted to Stripe.',
+          link: '/cases',
+          isRead: true,
+          readAt: new Date(now.getTime() - 1 * 60 * 60 * 1000),
+          createdAt: new Date(now.getTime() - 4 * 60 * 60 * 1000) // 4 hours ago
+        },
+        {
+          userId: user.id,
+          type: 'PMS_SYNC_COMPLETE',
+          priority: 'LOW',
+          title: 'PMS Sync Completed',
+          message: 'Successfully synced 12 new reservations from Opera PMS.',
+          link: '/pms',
+          isRead: true,
+          readAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+          createdAt: new Date(now.getTime() - 6 * 60 * 60 * 1000) // 6 hours ago
+        }
+      );
+    });
+
+    await prisma.notification.createMany({
+      data: demoNotifications,
+      skipDuplicates: true
+    });
+
+    console.log(`✓ Created ${demoNotifications.length} demo notifications\n`);
+  }
+
+  // ==========================================================================
   // SUMMARY
   // ==========================================================================
 

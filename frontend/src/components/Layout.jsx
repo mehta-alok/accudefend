@@ -7,6 +7,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Tutorial, HelpButton, HelpPanel } from './Tutorial';
+import NotificationPanel, { NotificationBell } from './NotificationPanel';
+import { api } from '../utils/api';
 import {
   LayoutDashboard,
   FileText,
@@ -47,7 +49,8 @@ export default function Layout({ children }) {
   const [showHelpPanel, setShowHelpPanel] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
-  const [notificationCount] = useState(3); // Example notification count
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -86,6 +89,27 @@ export default function Layout({ children }) {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Fetch notification count on load and periodically
+  useEffect(() => {
+    const fetchNotificationCount = async () => {
+      try {
+        const response = await api.get('/notifications/unread-count');
+        if (response.data.success) {
+          setNotificationCount(response.data.count);
+        }
+      } catch (error) {
+        // Silently fail - notifications are non-critical
+        console.debug('Could not fetch notification count:', error.message);
+      }
+    };
+
+    fetchNotificationCount();
+
+    // Poll for new notifications every 30 seconds
+    const interval = setInterval(fetchNotificationCount, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleStartTutorial = () => {
@@ -267,14 +291,17 @@ export default function Layout({ children }) {
               </button>
 
               {/* Notifications */}
-              <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors group">
-                <Bell className="w-5 h-5 text-gray-500 group-hover:text-gray-700" />
-                {notificationCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold text-white bg-red-500 rounded-full ring-2 ring-white">
-                    {notificationCount > 9 ? '9+' : notificationCount}
-                  </span>
-                )}
-              </button>
+              <div className="relative">
+                <NotificationBell
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  count={notificationCount}
+                />
+                <NotificationPanel
+                  isOpen={showNotifications}
+                  onClose={() => setShowNotifications(false)}
+                  onCountUpdate={setNotificationCount}
+                />
+              </div>
 
               {/* User menu */}
               <div className="relative">
