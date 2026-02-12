@@ -1,5 +1,6 @@
 /**
- * AccuDefend - AI Defense Configuration Service
+ * AccuDefend - AI-Powered Chargeback Defense Platform
+ * AI Defense Configuration Service
  * Manages AI model settings, confidence thresholds, and defense strategies
  */
 

@@ -1,5 +1,6 @@
 /**
- * AccuDefend - AI Agents Service
+ * AccuDefend - AI-Powered Chargeback Defense Platform
+ * AI Agents Service
  * Manages AI agents that automate backlog management, code review, and other tasks
  */
 

@@ -1,5 +1,6 @@
 /**
- * AccuDefend - Technical Backlog Service
+ * AccuDefend - AI-Powered Chargeback Defense Platform
+ * Technical Backlog Service
  * Manages technical backlog items, epics, sprints, and dependencies
  */
 

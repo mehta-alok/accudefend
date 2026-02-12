@@ -1,5 +1,6 @@
 /**
- * AccuDefend - Third-Party Integrations Service
+ * AccuDefend - AI-Powered Chargeback Defense Platform
+ * Third-Party Integrations Service
  * Manages connections with payment processors, PMS systems, and other external services
  */
 

@@ -1,5 +1,6 @@
 /**
- * AccuDefend - Two-Way PMS Sync Service
+ * AccuDefend - AI-Powered Chargeback Defense Platform
+ * Two-Way PMS Sync Service
  * Bi-directional synchronization with Property Management Systems
  * Supports real-time webhooks, scheduled polling, and event-driven updates
  */

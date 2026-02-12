@@ -1,5 +1,6 @@
 /**
- * AccuDefend - PMS Integration Routes
+ * AccuDefend - AI-Powered Chargeback Defense Platform
+ * PMS Integration Routes
  * API endpoints for Property Management System integrations
  */
 
