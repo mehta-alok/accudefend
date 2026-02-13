@@ -29,6 +29,12 @@ const adminRoutes = require('./routes/admin');
 const pmsRoutes = require('./routes/pms');
 const notificationsRoutes = require('./routes/notifications');
 const disputesRoutes = require('./routes/disputes');
+const reservationsRoutes = require('./routes/reservations');
+const syncRoutes = require('./routes/sync');
+
+// Queue manager for two-way sync
+const { initializeWorkers, shutdownWorkers } = require('./services/queue/queueManager');
+const { initializeScheduledSyncs } = require('./services/queue/scheduledSync');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -151,6 +157,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/pms', pmsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/disputes', disputesRoutes);
+app.use('/api/reservations', reservationsRoutes);
+app.use('/api/sync', syncRoutes);
 
 // API documentation redirect
 app.get('/api', (req, res) => {
@@ -167,7 +175,9 @@ app.get('/api', (req, res) => {
       admin: '/api/admin',
       pms: '/api/pms',
       notifications: '/api/notifications',
-      disputes: '/api/disputes'
+      disputes: '/api/disputes',
+      reservations: '/api/reservations',
+      sync: '/api/sync'
     }
   });
 });
@@ -224,6 +234,17 @@ async function startServer() {
     await initializeS3();
     logger.info('S3 initialized');
 
+    // Initialize BullMQ workers for two-way sync
+    try {
+      await initializeWorkers();
+      logger.info('BullMQ sync workers initialized');
+
+      await initializeScheduledSyncs();
+      logger.info('Scheduled sync jobs configured');
+    } catch (workerError) {
+      logger.warn('BullMQ workers not initialized (non-fatal):', workerError.message);
+    }
+
     // Start server
     app.listen(PORT, () => {
       logger.info(`
@@ -248,6 +269,7 @@ async function startServer() {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   logger.info('SIGTERM received, shutting down gracefully...');
+  try { await shutdownWorkers(); } catch (e) { /* ignore */ }
   const { prisma } = require('./config/database');
   await prisma.$disconnect();
   process.exit(0);
@@ -255,6 +277,7 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   logger.info('SIGINT received, shutting down gracefully...');
+  try { await shutdownWorkers(); } catch (e) { /* ignore */ }
   const { prisma } = require('./config/database');
   await prisma.$disconnect();
   process.exit(0);

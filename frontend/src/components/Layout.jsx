@@ -29,12 +29,15 @@ import {
   Moon,
   Sunrise,
   Link2,
-  BookOpen
+  BookOpen,
+  CalendarCheck,
+  RefreshCw
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Cases', href: '/cases', icon: FileText },
+  { name: 'Reservations', href: '/reservations', icon: CalendarCheck },
   { name: 'PMS Integration', href: '/pms', icon: Link2 },
   { name: 'Dispute Companies', href: '/disputes', icon: Shield },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },

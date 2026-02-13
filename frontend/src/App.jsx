@@ -16,6 +16,7 @@ import Settings from './pages/Settings';
 import PMSIntegration from './pages/PMSIntegration';
 import DisputeIntegration from './pages/DisputeIntegration';
 import TutorialPage from './pages/Tutorial';
+import Reservations from './pages/Reservations';
 
 // Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -100,6 +101,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DisputeIntegration />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reservations"
+          element={
+            <ProtectedRoute>
+              <Reservations />
             </ProtectedRoute>
           }
         />

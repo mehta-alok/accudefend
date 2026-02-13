@@ -3,7 +3,8 @@
  * Connect to Property Management Systems and fetch evidence directly
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { api, formatRelativeTime } from '../utils/api';
 import {
   Building2,
   Link2,
@@ -29,7 +30,10 @@ import {
   Check,
   X,
   Eye,
-  Paperclip
+  Paperclip,
+  Activity,
+  TrendingUp,
+  AlertOctagon
 } from 'lucide-react';
 
 // PMS Systems with their details
@@ -839,105 +843,427 @@ export default function PMSIntegration() {
 
       {/* Sync Status Tab */}
       {activeTab === 'sync' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-semibold text-gray-900">Two-Way Sync Status</h3>
-              <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2">
-                <RefreshCw className="w-4 h-4" />
-                <span>Sync All</span>
-              </button>
+        <SyncStatusTab connections={connections} setActiveTab={setActiveTab} />
+      )}
+
+      {/* Connection Modal */}
+      {renderConnectionForm()}
+    </div>
+  );
+}
+
+// =============================================
+// Sync Status Tab - Uses real API data
+// =============================================
+function SyncStatusTab({ connections, setActiveTab }) {
+  const [syncData, setSyncData] = useState(null);
+  const [syncLogs, setSyncLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState({});
+  const [showLogs, setShowLogs] = useState(false);
+
+  const fetchSyncStatus = useCallback(async () => {
+    try {
+      const response = await api.get('/sync/status');
+      setSyncData(response.data);
+    } catch (error) {
+      console.debug('Could not fetch sync status:', error.message);
+      // Fall back to showing connections without sync data
+      setSyncData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const fetchSyncLogs = useCallback(async () => {
+    try {
+      const response = await api.get('/sync/logs?limit=20');
+      setSyncLogs(response.data.logs || []);
+    } catch (error) {
+      console.debug('Could not fetch sync logs:', error.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSyncStatus();
+    fetchSyncLogs();
+    // Refresh every 30 seconds
+    const interval = setInterval(() => {
+      fetchSyncStatus();
+      fetchSyncLogs();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchSyncStatus, fetchSyncLogs]);
+
+  const handleTriggerSync = async (integrationId, integrationName) => {
+    setSyncing(prev => ({ ...prev, [integrationId]: true }));
+    try {
+      await api.post('/sync/trigger', { integrationId, syncType: 'incremental' });
+      // Refresh status after triggering
+      setTimeout(() => {
+        fetchSyncStatus();
+        fetchSyncLogs();
+      }, 2000);
+    } catch (error) {
+      console.error(`Sync trigger failed for ${integrationName}:`, error.message);
+    } finally {
+      setTimeout(() => {
+        setSyncing(prev => ({ ...prev, [integrationId]: false }));
+      }, 3000);
+    }
+  };
+
+  const getSyncStatusBadge = (status) => {
+    const badges = {
+      completed: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-500', label: 'Healthy' },
+      failed: { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-500', label: 'Error' },
+      started: { bg: 'bg-blue-100', text: 'text-blue-800', dot: 'bg-blue-500', label: 'Running' },
+      partial: { bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-500', label: 'Partial' },
+    };
+    return badges[status] || badges.completed;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Sync Overview Cards */}
+      {syncData && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Active Integrations</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{syncData.integrations?.length || 0}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Link2 className="w-6 h-6 text-blue-600" />
+              </div>
             </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Total Synced Records</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {syncData.integrations?.reduce((sum, i) =>
+                    sum + (i.counts?.reservationsSynced || 0) + (i.counts?.chargebacksSynced || 0), 0
+                  ) || 0}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Queue Health</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {syncData.queues?.error ? 'Offline' : 'Online'}
+                </p>
+              </div>
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                syncData.queues?.error ? 'bg-red-100' : 'bg-green-100'
+              }`}>
+                <Activity className={`w-6 h-6 ${
+                  syncData.queues?.error ? 'text-red-600' : 'text-green-600'
+                }`} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-            {connections.length > 0 ? (
-              <div className="space-y-4">
-                {connections.map((conn) => {
-                  const pms = PMS_SYSTEMS.find(p => p.id === conn.pmsType);
-                  return (
-                    <div key={conn.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-2xl">{pms?.logo}</span>
-                          <div>
-                            <h4 className="font-medium text-gray-900">{conn.pmsName}</h4>
-                            <p className="text-sm text-gray-500">Connected {new Date(conn.connectedAt).toLocaleDateString()}</p>
-                          </div>
+      {/* Integration Sync Status */}
+      <div className="bg-white rounded-xl border border-gray-200">
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 className="font-semibold text-gray-900">Two-Way Sync Status</h3>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowLogs(!showLogs)}
+              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-1"
+            >
+              <FileText className="w-4 h-4" />
+              <span>{showLogs ? 'Hide Logs' : 'View Logs'}</span>
+            </button>
+            <button
+              onClick={fetchSyncStatus}
+              className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-1"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {syncData && syncData.integrations?.length > 0 ? (
+            <div className="space-y-6">
+              {syncData.integrations.map((item) => {
+                const pms = PMS_SYSTEMS.find(p => p.id === item.integration.type?.toUpperCase());
+                const badge = getSyncStatusBadge(item.lastSync?.status);
+                const isSyncing = syncing[item.integration.id];
+
+                return (
+                  <div key={item.integration.id} className="border border-gray-200 rounded-lg p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{pms?.logo || '🔗'}</span>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{item.integration.name}</h4>
+                          <p className="text-sm text-gray-500">
+                            {item.integration.type} {item.integration.syncEnabled && '• Two-way sync enabled'}
+                          </p>
                         </div>
-                        <span className="flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                          <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                          Active
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <span className={`flex items-center px-3 py-1 rounded-full text-sm font-medium ${badge.bg} ${badge.text}`}>
+                          <span className={`w-2 h-2 rounded-full mr-2 ${badge.dot}`}></span>
+                          {badge.label}
                         </span>
+                        <button
+                          onClick={() => handleTriggerSync(item.integration.id, item.integration.name)}
+                          disabled={isSyncing}
+                          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center space-x-1"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                          <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+                        </button>
                       </div>
+                    </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center space-x-2 text-gray-500 mb-1">
-                            <ArrowRight className="w-4 h-4" />
-                            <span className="text-xs">Inbound</span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-900">24</p>
-                          <p className="text-xs text-gray-500">events today</p>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 text-gray-500 mb-1">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">Last Sync</span>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center space-x-2 text-gray-500 mb-1">
-                            <ArrowRight className="w-4 h-4 rotate-180" />
-                            <span className="text-xs">Outbound</span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-900">8</p>
-                          <p className="text-xs text-gray-500">events today</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center space-x-2 text-gray-500 mb-1">
-                            <Clock className="w-4 h-4" />
-                            <span className="text-xs">Last Sync</span>
-                          </div>
-                          <p className="text-lg font-semibold text-gray-900">5m ago</p>
-                          <p className="text-xs text-gray-500">successful</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center space-x-2 text-gray-500 mb-1">
-                            <Zap className="w-4 h-4" />
-                            <span className="text-xs">Webhooks</span>
-                          </div>
-                          <p className="text-lg font-semibold text-green-600">Active</p>
-                          <p className="text-xs text-gray-500">real-time</p>
-                        </div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {item.lastSync?.at ? formatRelativeTime(item.lastSync.at) : 'Never'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {item.lastSync?.status || 'pending'}
+                        </p>
                       </div>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 text-gray-500 mb-1">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">Success Rate</span>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {item.health?.successRate || 'N/A'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">last 24h</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 text-gray-500 mb-1">
+                          <ArrowRight className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">Syncs (24h)</span>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {item.health?.syncsLast24h || 0}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {item.health?.failuresLast24h || 0} failed
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 text-gray-500 mb-1">
+                          <Database className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">Reservations</span>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {item.counts?.reservationsSynced || 0}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">synced</p>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center space-x-2 text-gray-500 mb-1">
+                          <AlertOctagon className="w-3.5 h-3.5" />
+                          <span className="text-xs font-medium">Chargebacks</span>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {item.counts?.chargebacksSynced || 0}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">synced</p>
+                      </div>
+                    </div>
 
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <h5 className="text-sm font-medium text-gray-700 mb-2">Sync Capabilities</h5>
-                        <div className="flex flex-wrap gap-2">
-                          {['Reservations', 'Guest Profiles', 'Folios', 'Payments', 'Documents', 'Notes'].map((cap, i) => (
-                            <span key={i} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700">
-                              <Check className="w-3 h-3 mr-1" />
-                              {cap}
-                            </span>
+                    {/* Recent Sync Activity */}
+                    {item.recentSyncs?.length > 0 && (
+                      <div className="mt-4 pt-3 border-t border-gray-100">
+                        <h5 className="text-xs font-medium text-gray-500 uppercase mb-2">Recent Activity</h5>
+                        <div className="space-y-1.5">
+                          {item.recentSyncs.slice(0, 3).map((sync) => (
+                            <div key={sync.id} className="flex items-center justify-between text-sm">
+                              <div className="flex items-center space-x-2">
+                                {sync.status === 'completed' ? (
+                                  <CheckCircle className="w-3.5 h-3.5 text-green-500" />
+                                ) : sync.status === 'failed' ? (
+                                  <AlertCircle className="w-3.5 h-3.5 text-red-500" />
+                                ) : (
+                                  <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />
+                                )}
+                                <span className="text-gray-700">
+                                  {sync.direction === 'inbound' ? '↓' : '↑'} {sync.entityType || sync.syncType}
+                                </span>
+                                {sync.recordsProcessed > 0 && (
+                                  <span className="text-gray-400 text-xs">
+                                    ({sync.recordsProcessed} records)
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center space-x-2 text-xs text-gray-400">
+                                {sync.durationMs && <span>{(sync.durationMs / 1000).toFixed(1)}s</span>}
+                                <span>{formatRelativeTime(sync.startedAt)}</span>
+                              </div>
+                            </div>
                           ))}
                         </div>
                       </div>
+                    )}
+
+                    {/* Sync Capabilities */}
+                    <div className="mt-4 pt-3 border-t border-gray-100">
+                      <h5 className="text-xs font-medium text-gray-500 uppercase mb-2">Sync Capabilities</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {['Reservations', 'Guest Profiles', 'Folios', 'Payments', 'Documents', 'Notes'].map((cap, i) => (
+                          <span key={i} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-50 text-blue-700">
+                            <Check className="w-3 h-3 mr-1" />
+                            {cap}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : connections.length > 0 ? (
+            /* Show connections when API returns no sync data but there are local connections */
+            <div className="space-y-4">
+              {connections.map((conn) => {
+                const pms = PMS_SYSTEMS.find(p => p.id === conn.pmsType);
+                return (
+                  <div key={conn.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{pms?.logo}</span>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{conn.pmsName}</h4>
+                          <p className="text-sm text-gray-500">
+                            Connected {new Date(conn.connectedAt).toLocaleDateString()}
+                            {conn.syncEnabled && ' • Two-way sync'}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                        Active
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Database className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <h4 className="text-lg font-medium text-gray-900 mb-2">No PMS Connected</h4>
+              <p className="text-gray-500 mb-4">Connect a Property Management System to enable two-way sync</p>
+              <button
+                onClick={() => setActiveTab('connect')}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Connect PMS
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sync Logs Panel */}
+      {showLogs && (
+        <div className="bg-white rounded-xl border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900">Sync Logs</h3>
+          </div>
+          <div className="overflow-x-auto">
+            {syncLogs.length > 0 ? (
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Direction</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Entity</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Records</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {syncLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        {log.status === 'completed' ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Success
+                          </span>
+                        ) : log.status === 'failed' ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Failed
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">
+                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            Running
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">{log.syncType}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs font-medium ${log.direction === 'inbound' ? 'text-blue-600' : 'text-purple-600'}`}>
+                          {log.direction === 'inbound' ? '↓ Inbound' : '↑ Outbound'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">{log.entityType || '-'}</td>
+                      <td className="px-4 py-3 text-gray-700">
+                        {log.recordsProcessed || 0}
+                        {log.recordsFailed > 0 && (
+                          <span className="text-red-500 ml-1">({log.recordsFailed} failed)</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {log.durationMs ? `${(log.durationMs / 1000).toFixed(1)}s` : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-gray-500">
+                        {formatRelativeTime(log.startedAt)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
-              <div className="text-center py-12">
-                <Database className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <h4 className="text-lg font-medium text-gray-900 mb-2">No PMS Connected</h4>
-                <p className="text-gray-500 mb-4">Connect a Property Management System to enable two-way sync</p>
-                <button
-                  onClick={() => setActiveTab('connect')}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Connect PMS
-                </button>
+              <div className="text-center py-8 text-gray-500">
+                <Clock className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                <p>No sync logs yet</p>
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* Connection Modal */}
-      {renderConnectionForm()}
     </div>
   );
 }

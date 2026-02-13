@@ -177,3 +177,30 @@ export const getConfidenceColor = (score) => {
   if (score >= 50) return 'confidence-medium';
   return 'confidence-low';
 };
+
+// Reservation status colors
+export const getReservationStatusColor = (status) => {
+  const colors = {
+    confirmed: 'bg-gray-100 text-gray-800',
+    checked_in: 'bg-blue-100 text-blue-800',
+    checked_out: 'bg-green-100 text-green-800',
+    cancelled: 'bg-red-100 text-red-800',
+    no_show: 'bg-orange-100 text-orange-800'
+  };
+  return colors[status] || 'bg-gray-100 text-gray-800';
+};
+
+// Format relative time (e.g., "5 min ago")
+export const formatRelativeTime = (date) => {
+  if (!date) return 'Never';
+  const now = new Date();
+  const diff = now - new Date(date);
+  const minutes = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  return `${days}d ago`;
+};
