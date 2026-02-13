@@ -25,6 +25,8 @@
 - **Real-Time Dashboard** - Live metrics, trends, and case management
 - **Role-Based Access** - Property-level data isolation with RBAC
 - **Audit Trail** - Complete compliance logging for all actions
+- **Dispute Company Integration** - Merlink 2-way sync and dispute company management
+- **Notifications System** - Real-time notification panel with alerts
 - **Technical Backlog** - Built-in backlog management with sprints and epics
 - **AI Agents** - Autonomous agents for backlog management, code review, and security scanning
 - **Cloud Infrastructure** - Multi-region AWS deployment with disaster recovery
@@ -52,8 +54,10 @@
 │                                                                  │
 │  External Integrations:                                         │
 │  ├── Payment Processors (Stripe, Adyen, Shift4, Elavon)        │
+│  ├── Dispute Companies (Merlink 2-way sync)                     │
 │  ├── AWS S3 (Evidence Storage)                                  │
-│  └── PMS (Mews, Oracle Opera Cloud)                            │
+│  ├── PMS (Mews, Oracle Opera Cloud, Cloudbeds, 12+ systems)    │
+│  └── AI Services (OpenAI, Anthropic APIs)                       │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -155,6 +159,21 @@ docker-compose exec api npx prisma migrate deploy
 | POST | `/api/webhooks/shift4` | Shift4 events |
 | POST | `/api/webhooks/elavon` | Elavon events |
 
+### Disputes
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/disputes` | List dispute companies |
+| POST | `/api/disputes` | Add dispute company |
+| PATCH | `/api/disputes/:id` | Update dispute company |
+| DELETE | `/api/disputes/:id` | Remove dispute company |
+
+### Notifications
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/notifications` | List notifications |
+| PATCH | `/api/notifications/:id/read` | Mark as read |
+| POST | `/api/notifications/read-all` | Mark all as read |
+
 ---
 
 ## AI Fraud Detection
@@ -250,36 +269,81 @@ AccuDefend includes a built-in **interactive tutorial** and **contextual help sy
 ```
 accudefend/
 ├── backend/
-│   ├── config/           # Database, Redis, S3 configuration
-│   ├── middleware/       # Authentication middleware
-│   ├── prisma/           # Database schema and migrations
-│   ├── routes/           # API route handlers
-│   ├── services/         # Business logic
-│   │   ├── fraudDetection.js  # AI fraud analysis
-│   │   ├── backlog.js         # Backlog management
+│   ├── config/                # Database, Redis, S3 configuration
+│   │   ├── database.js        # Prisma client setup
+│   │   ├── redis.js           # Redis connection & session management
+│   │   ├── s3.js              # AWS S3 configuration
+│   │   └── storage.js         # Storage abstraction layer
+│   ├── controllers/           # Request handlers
+│   │   ├── documentsController.js     # Document processing
+│   │   └── notificationsController.js # Notification handling
+│   ├── middleware/            # Authentication middleware
+│   │   └── auth.js            # JWT auth & role-based access
+│   ├── prisma/                # Database schema and migrations
+│   │   ├── schema.prisma      # Database schema
+│   │   └── seed.js            # Database seeding
+│   ├── routes/                # API route handlers
+│   │   ├── auth.js            # Login, register, refresh, logout
+│   │   ├── cases.js           # Chargeback CRUD operations
+│   │   ├── evidence.js        # File upload, download, deletion
+│   │   ├── analytics.js       # Dashboard metrics, trends, reports
+│   │   ├── admin.js           # User management, settings
+│   │   ├── disputes.js        # Dispute company management
+│   │   ├── notifications.js   # Notification panel & alerts
+│   │   ├── pms.js             # PMS system integration
+│   │   └── webhooks.js        # Payment processor webhooks
+│   ├── services/              # Business logic
+│   │   ├── fraudDetection.js  # AI fraud analysis engine
+│   │   ├── aiDefenseConfig.js # AI defense configuration
 │   │   ├── aiAgents.js        # AI agent orchestration
-│   │   └── integrations.js    # Third-party integrations
-│   ├── utils/            # Helpers (logger, validators)
-│   ├── server.js         # Application entry point
-│   ├── Dockerfile
+│   │   ├── backlog.js         # Backlog management
+│   │   ├── integrations.js    # Third-party integrations
+│   │   ├── pmsIntegration.js  # PMS connection handler
+│   │   ├── pmsSyncService.js  # PMS data synchronization
+│   │   └── disputeCompanies.js # Dispute company integrations
+│   ├── data/                  # Development data
+│   │   └── mockData.js        # Mock data for dev testing
+│   ├── utils/                 # Helpers (logger, validators)
+│   ├── uploads/               # Local file storage for evidence
+│   ├── server.js              # Application entry point
+│   ├── Dockerfile             # Production container
+│   ├── Dockerfile.dev         # Development container (hot-reload)
 │   └── package.json
 ├── frontend/
 │   ├── src/
-│   │   ├── components/   # Reusable UI components
-│   │   │   ├── Layout.jsx    # Main layout with sidebar
-│   │   │   └── Tutorial.jsx  # Tutorial & Help system
-│   │   ├── hooks/        # React hooks (useAuth)
-│   │   ├── pages/        # Page components
-│   │   └── utils/        # API client, helpers
+│   │   ├── components/        # Reusable UI components
+│   │   │   ├── Layout.jsx           # Main layout with sidebar & nav
+│   │   │   ├── Tutorial.jsx         # Tutorial & Help system
+│   │   │   └── NotificationPanel.jsx # Notification dropdown panel
+│   │   ├── hooks/             # React hooks
+│   │   │   └── useAuth.jsx    # Authentication context & state
+│   │   ├── pages/             # Page components (9 pages)
+│   │   │   ├── Login.jsx              # Authentication
+│   │   │   ├── Dashboard.jsx          # Main dashboard with metrics
+│   │   │   ├── Cases.jsx              # Case list & management
+│   │   │   ├── CaseDetail.jsx         # Individual case details
+│   │   │   ├── Analytics.jsx          # Reports & analytics
+│   │   │   ├── Settings.jsx           # System configuration
+│   │   │   ├── PMSIntegration.jsx     # PMS integrations
+│   │   │   ├── DisputeIntegration.jsx # Dispute company integrations
+│   │   │   └── Tutorial.jsx           # Dedicated tutorial page
+│   │   └── utils/             # API client, helpers
+│   │       ├── api.js         # API client & formatting utilities
+│   │       └── helpers.js     # Helper functions
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   └── package.json
 ├── infrastructure/
 │   └── aws/
-│       ├── main.tf       # Main Terraform configuration
-│       └── variables.tf  # Infrastructure variables
-├── docker-compose.yml
+│       ├── main.tf            # Main Terraform configuration
+│       └── variables.tf       # Infrastructure variables
+├── docker-compose.yml         # Production container orchestration
+├── docker-compose.dev.yml     # Development environment setup
+├── start-dev.sh               # Development startup script
+├── start-production.sh        # Production startup script
+├── start-frontend.sh          # Frontend-only startup script
 ├── AccuDefend_System_Design.md  # Full system documentation
+├── DEPLOYMENT.md              # Deployment guide
 └── README.md
 ```
 

@@ -30,9 +30,10 @@ AccuDefend supports multiple deployment environments:
 
 ### Required Tools
 - Node.js 20+ and npm 10+
-- Docker and Docker Compose
+- Docker and Docker Compose v2
 - AWS CLI v2 (configured)
 - PostgreSQL 16 client
+- Terraform 1.x (for infrastructure provisioning)
 - Git
 
 ### AWS Resources (for cloud deployment)
@@ -53,7 +54,7 @@ AccuDefend supports multiple deployment environments:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-org/accudefend.git
+git clone https://github.com/mehta-alok/accudefend.git
 cd accudefend
 
 # 2. Start infrastructure (PostgreSQL + Redis)
@@ -99,6 +100,29 @@ docker-compose logs -f api
 
 # Stop all services
 docker-compose down
+```
+
+### Using Startup Scripts
+
+```bash
+# Development mode (with Docker health checks)
+./start-dev.sh
+
+# Production mode (with migrations and health verification)
+./start-production.sh
+
+# Frontend only
+./start-frontend.sh
+```
+
+### Using Development Docker Compose
+
+```bash
+# Start dev environment with hot-reload
+docker-compose -f docker-compose.dev.yml up -d
+
+# Backend uses Dockerfile.dev with nodemon for auto-restart
+# PostgreSQL 16 and Redis 7 are included
 ```
 
 ---
@@ -346,6 +370,44 @@ aws ecs update-service \
 
 ---
 
+## Infrastructure Provisioning (Terraform)
+
+AccuDefend's AWS infrastructure is defined as code using Terraform in `infrastructure/aws/`.
+
+### Provision Infrastructure
+
+```bash
+cd infrastructure/aws
+
+# Initialize Terraform
+terraform init
+
+# Plan changes
+terraform plan -var="environment=production" -var="aws_region=us-east-1"
+
+# Apply changes
+terraform apply -var="environment=production" -var="aws_region=us-east-1"
+```
+
+### Infrastructure Components Provisioned
+
+| Resource | Service | Details |
+|----------|---------|---------|
+| Networking | VPC | Multi-AZ with public/private subnets |
+| Compute | ECS Fargate | Backend (3 tasks), Frontend (2 tasks), AI Agent (2 tasks) |
+| Database | Aurora PostgreSQL | Multi-AZ, 3 instances (1 writer, 2 readers) |
+| Cache | ElastiCache Redis | 3-node cluster with automatic failover |
+| Storage | S3 | Cross-region replication, lifecycle policies |
+| CDN | CloudFront | Global edge locations |
+| DNS | Route 53 | Health checks, failover routing |
+| Load Balancer | ALB | SSL termination, path-based routing |
+| Secrets | Secrets Manager | Encrypted credentials, automatic rotation |
+| Queues | SQS | Webhook processing, AI analysis |
+| Notifications | SNS | Alerts and monitoring |
+| Monitoring | CloudWatch | Alarms for error rates, latency, health |
+
+---
+
 ## CI/CD Pipeline
 
 ### GitHub Actions Workflow
@@ -490,5 +552,5 @@ aws elasticache describe-cache-clusters --cache-cluster-id accudefend-prod
 ## Support
 
 - **Documentation**: https://docs.accudefend.com
-- **Issues**: https://github.com/your-org/accudefend/issues
+- **Issues**: https://github.com/mehta-alok/accudefend/issues
 - **Email**: support@accudefend.com

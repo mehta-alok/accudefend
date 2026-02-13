@@ -122,25 +122,32 @@ frontend/
 │   ├── index.css               # Global styles (Tailwind)
 │   │
 │   ├── components/
-│   │   ├── Layout.jsx          # Main layout with sidebar & help integration
-│   │   └── Tutorial.jsx        # Tutorial, HelpButton & HelpPanel components
+│   │   ├── Layout.jsx              # Main layout with sidebar & help integration
+│   │   ├── Tutorial.jsx            # Tutorial, HelpButton & HelpPanel components
+│   │   └── NotificationPanel.jsx   # Notification dropdown panel
 │   │
 │   ├── pages/
-│   │   ├── Login.jsx           # Authentication
-│   │   ├── Dashboard.jsx       # Main dashboard
-│   │   ├── Cases.jsx           # Case list
-│   │   ├── CaseDetail.jsx      # Individual case view
-│   │   ├── Analytics.jsx       # Reports & analytics
-│   │   └── Settings.jsx        # Configuration
+│   │   ├── Login.jsx               # Authentication
+│   │   ├── Dashboard.jsx           # Main dashboard with metrics
+│   │   ├── Cases.jsx               # Case list & management
+│   │   ├── CaseDetail.jsx          # Individual case view
+│   │   ├── Analytics.jsx           # Reports & analytics
+│   │   ├── Settings.jsx            # System configuration
+│   │   ├── PMSIntegration.jsx      # PMS system connections
+│   │   ├── DisputeIntegration.jsx  # Dispute company integrations (Merlink sync)
+│   │   └── Tutorial.jsx            # Dedicated tutorial page
 │   │
 │   ├── hooks/
-│   │   └── useAuth.jsx         # Authentication context
+│   │   └── useAuth.jsx         # Authentication context & state
 │   │
 │   └── utils/
-│       └── api.js              # API client & helpers
+│       ├── api.js              # API client & formatting utilities
+│       └── helpers.js          # Helper functions
 │
 ├── tailwind.config.js          # Tailwind CSS config
 ├── vite.config.js              # Vite build config
+├── nginx.conf                  # Production Nginx configuration
+├── Dockerfile                  # Production container image
 └── package.json
 ```
 
@@ -152,32 +159,53 @@ backend/
 │
 ├── config/
 │   ├── database.js             # Prisma client setup
-│   ├── redis.js                # Redis connection
+│   ├── redis.js                # Redis connection & session management
 │   ├── s3.js                   # AWS S3 configuration
 │   └── storage.js              # Storage abstraction layer
 │
+├── controllers/
+│   ├── documentsController.js      # Document processing
+│   └── notificationsController.js  # Notification handling
+│
 ├── middleware/
-│   └── auth.js                 # JWT authentication
+│   └── auth.js                 # JWT authentication & role-based access
 │
 ├── routes/
-│   ├── auth.js                 # Login, register, refresh
-│   ├── cases.js                # Chargeback CRUD
-│   ├── evidence.js             # File upload/download
-│   ├── analytics.js            # Reports & metrics
-│   ├── admin.js                # Admin functions
-│   └── webhooks.js             # Payment provider webhooks
+│   ├── auth.js                 # Login, register, refresh, logout
+│   ├── cases.js                # Chargeback CRUD operations
+│   ├── evidence.js             # File upload/download/deletion
+│   ├── analytics.js            # Dashboard metrics, trends, reports
+│   ├── admin.js                # User management, settings, storage health
+│   ├── disputes.js             # Dispute company management
+│   ├── notifications.js        # Notification panel & alerts
+│   ├── pms.js                  # PMS system integration
+│   └── webhooks.js             # Payment processor webhooks (Stripe, Adyen, Shift4, Elavon)
 │
 ├── services/
-│   └── fraudDetection.js       # AI analysis engine
+│   ├── fraudDetection.js       # AI fraud analysis engine
+│   ├── aiDefenseConfig.js      # AI defense configuration management
+│   ├── aiAgents.js             # Autonomous AI agent orchestration
+│   ├── backlog.js              # Technical backlog management
+│   ├── integrations.js         # Third-party API integration management
+│   ├── pmsIntegration.js       # PMS system connection handler
+│   ├── pmsSyncService.js       # PMS data synchronization service
+│   └── disputeCompanies.js     # Dispute company integrations (Merlink, etc.)
+│
+├── data/
+│   └── mockData.js             # Mock data for development testing
 │
 ├── utils/
-│   ├── validators.js           # Zod schemas
-│   └── logger.js               # Winston logging
+│   ├── validators.js           # Zod validation schemas
+│   └── logger.js               # Winston logging configuration
 │
 ├── prisma/
 │   ├── schema.prisma           # Database schema
-│   └── seed.js                 # Initial data
+│   └── seed.js                 # Database seeding script
 │
+├── uploads/                    # Local file storage for evidence
+├── Dockerfile                  # Production container image
+├── Dockerfile.dev              # Development container (hot-reload with nodemon)
+├── .env.example                # Environment variable template
 └── package.json
 ```
 
@@ -197,17 +225,18 @@ backend/
 │  │  │ - Cases  │  │  │          │ │          │ │          │     │    │   │
 │  │  │ - Stats  │  │  │ - Stats  │ │ - Table  │ │ - AI     │     │    │   │
 │  │  │ - Config │  │  │ - Charts │ │ - Filter │ │ - Email  │     │    │   │
-│  │  │          │  │  │ - Urgent │ │ - Search │ │ - Storage│     │    │   │
+│  │  │ - PMS    │  │  │ - Urgent │ │ - Search │ │ - Storage│     │    │   │
+│  │  │ - Dispute│  │  │          │ │          │ │          │     │    │   │
 │  │  └──────────┘  │  └──────────┘ └──────────┘ └──────────┘     │    │   │
 │  │                │                                              │    │   │
 │  │                └──────────────────────────────────────────────┘    │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                              │
-│  ┌─────────────────────┐  ┌─────────────────────┐                          │
-│  │   Tutorial/Help     │  │    Auth Context     │                          │
-│  │   - Onboarding      │  │    - User state     │                          │
-│  │   - Help panel      │  │    - JWT tokens     │                          │
-│  └─────────────────────┘  └─────────────────────┘                          │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌──────────────────┐   │
+│  │   Tutorial/Help     │  │    Auth Context     │  │  Notifications   │   │
+│  │   - Onboarding      │  │    - User state     │  │  - Dropdown      │   │
+│  │   - Help panel      │  │    - JWT tokens     │  │  - Alerts        │   │
+│  └─────────────────────┘  └─────────────────────┘  └──────────────────┘   │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -234,7 +263,7 @@ backend/
 | Node.js | 20.x | Runtime |
 | Express.js | 4.x | Web framework |
 | Prisma | 5.x | ORM |
-| PostgreSQL | 15.x | Database |
+| PostgreSQL | 16.x | Database |
 | Redis | 7.x | Caching |
 | JWT | - | Authentication |
 | Zod | 3.x | Validation |
@@ -244,9 +273,19 @@ backend/
 
 | Service | Purpose |
 |---------|---------|
-| AWS S3 | Evidence file storage |
-| AWS CloudFront | CDN (optional) |
+| AWS ECS Fargate | Container orchestration |
+| AWS Aurora PostgreSQL | Managed database (Multi-AZ) |
+| AWS ElastiCache Redis | Managed cache cluster |
+| AWS S3 | Evidence file storage (cross-region replication) |
+| AWS CloudFront | CDN for global edge distribution |
+| AWS Route 53 | DNS management |
+| AWS ALB | Load balancing with SSL termination |
+| AWS Secrets Manager | Encrypted credential storage |
+| AWS SQS | Webhook processing queue |
+| AWS SNS | Notifications and alerts |
+| AWS CloudWatch | Monitoring and alarms |
 | Docker | Containerization |
+| Terraform | Infrastructure as Code |
 | Nginx | Reverse proxy |
 
 ---
@@ -435,7 +474,33 @@ POST   /api/webhooks/shift4         # Shift4 events
 POST   /api/webhooks/elavon         # Elavon events
 ```
 
-### 6.7 API Response Format
+### 6.7 Disputes
+
+```
+GET    /api/disputes                # List dispute companies
+POST   /api/disputes                # Add dispute company
+PATCH  /api/disputes/:id            # Update dispute company
+DELETE /api/disputes/:id            # Remove dispute company
+```
+
+### 6.8 Notifications
+
+```
+GET    /api/notifications           # List notifications
+PATCH  /api/notifications/:id/read  # Mark notification as read
+POST   /api/notifications/read-all  # Mark all as read
+```
+
+### 6.9 PMS
+
+```
+GET    /api/pms                     # List PMS connections
+POST   /api/pms/connect             # Connect PMS system
+POST   /api/pms/:id/sync            # Trigger PMS sync
+DELETE /api/pms/:id                 # Disconnect PMS
+```
+
+### 6.10 API Response Format
 
 ```json
 // Success Response
@@ -845,17 +910,11 @@ Infrastructure is managed as code using Terraform:
 ```bash
 infrastructure/
 ├── aws/
-│   ├── main.tf           # Main infrastructure definition
-│   ├── variables.tf      # Configuration variables
-│   ├── outputs.tf        # Output values
-│   ├── vpc.tf            # VPC and networking
-│   ├── rds.tf            # Aurora PostgreSQL
-│   ├── elasticache.tf    # Redis cluster
-│   ├── ecs.tf            # Container orchestration
-│   ├── s3.tf             # Storage buckets
-│   ├── secrets.tf        # Secrets Manager
-│   └── monitoring.tf     # CloudWatch, alarms
+│   ├── main.tf           # Main infrastructure definition (VPC, RDS, ECS, S3, ALB, etc.)
+│   └── variables.tf      # Configuration variables (environment, sizing, API keys)
 ```
+
+> **Note:** All infrastructure resources (VPC, Aurora PostgreSQL, ElastiCache, ECS Fargate, S3, CloudFront, Route 53, ALB, Secrets Manager, SQS, SNS, CloudWatch) are defined in `main.tf` (1,049 lines) with configurable variables in `variables.tf` (261 lines).
 
 ---
 
@@ -1375,7 +1434,7 @@ services:
       - REDIS_URL=redis://redis:6379
 
   postgres:
-    image: postgres:15
+    image: postgres:16-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -1462,64 +1521,87 @@ accudefend/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Layout.jsx          # Main layout with sidebar
-│   │   │   └── Tutorial.jsx        # Tutorial & Help system
+│   │   │   ├── Layout.jsx              # Main layout with sidebar & nav
+│   │   │   ├── Tutorial.jsx            # Tutorial & Help system
+│   │   │   └── NotificationPanel.jsx   # Notification dropdown panel
 │   │   ├── pages/
-│   │   │   ├── Dashboard.jsx       # Main dashboard
-│   │   │   ├── Cases.jsx           # Case list
-│   │   │   ├── CaseDetail.jsx      # Case details
-│   │   │   ├── Analytics.jsx       # Reports
-│   │   │   ├── Settings.jsx        # Configuration
-│   │   │   ├── PMSIntegration.jsx  # PMS connections
-│   │   │   └── Login.jsx           # Authentication
+│   │   │   ├── Login.jsx               # Authentication
+│   │   │   ├── Dashboard.jsx           # Main dashboard with metrics
+│   │   │   ├── Cases.jsx               # Case list & management
+│   │   │   ├── CaseDetail.jsx          # Individual case details
+│   │   │   ├── Analytics.jsx           # Reports & analytics
+│   │   │   ├── Settings.jsx            # System configuration
+│   │   │   ├── PMSIntegration.jsx      # PMS connections
+│   │   │   ├── DisputeIntegration.jsx  # Dispute company integrations
+│   │   │   └── Tutorial.jsx            # Dedicated tutorial page
 │   │   ├── hooks/
-│   │   │   └── useAuth.jsx         # Auth context
+│   │   │   └── useAuth.jsx             # Auth context & state
 │   │   └── utils/
-│   │       └── api.js              # API client
-│   ├── .env                        # Frontend config
+│   │       ├── api.js                  # API client & formatting
+│   │       └── helpers.js              # Helper functions
+│   ├── .env                            # Frontend config
+│   ├── nginx.conf                      # Production Nginx config
+│   ├── Dockerfile                      # Production container
 │   ├── package.json
 │   └── vite.config.js
 │
 ├── backend/
 │   ├── config/
-│   │   ├── database.js             # Prisma setup
-│   │   ├── redis.js                # Redis connection
-│   │   ├── s3.js                   # AWS S3 config
-│   │   └── storage.js              # Storage abstraction
+│   │   ├── database.js                 # Prisma setup
+│   │   ├── redis.js                    # Redis connection & sessions
+│   │   ├── s3.js                       # AWS S3 config
+│   │   └── storage.js                  # Storage abstraction
+│   ├── controllers/
+│   │   ├── documentsController.js      # Document processing
+│   │   └── notificationsController.js  # Notification handling
 │   ├── middleware/
-│   │   └── auth.js                 # JWT middleware
+│   │   └── auth.js                     # JWT middleware & RBAC
 │   ├── routes/
-│   │   ├── auth.js                 # Authentication
-│   │   ├── cases.js                # Chargeback CRUD
-│   │   ├── evidence.js             # File uploads
-│   │   ├── analytics.js            # Reports
-│   │   ├── admin.js                # Admin functions
-│   │   ├── webhooks.js             # Payment webhooks
-│   │   └── pms.js                  # PMS integration
+│   │   ├── auth.js                     # Authentication
+│   │   ├── cases.js                    # Chargeback CRUD
+│   │   ├── evidence.js                 # File uploads
+│   │   ├── analytics.js               # Dashboard & reports
+│   │   ├── admin.js                    # Admin functions
+│   │   ├── disputes.js                 # Dispute company management
+│   │   ├── notifications.js           # Notification panel & alerts
+│   │   ├── pms.js                      # PMS integration
+│   │   └── webhooks.js                 # Payment webhooks
 │   ├── services/
-│   │   ├── fraudDetection.js       # AI analysis
-│   │   ├── aiDefenseConfig.js      # AI configuration
-│   │   ├── pmsIntegration.js       # PMS connections
-│   │   ├── pmsSyncService.js       # PMS sync
-│   │   ├── aiAgents.js             # AI agents
-│   │   ├── backlog.js              # Backlog management
-│   │   └── integrations.js         # Third-party integrations
+│   │   ├── fraudDetection.js           # AI fraud analysis engine
+│   │   ├── aiDefenseConfig.js          # AI defense configuration
+│   │   ├── aiAgents.js                 # AI agent orchestration
+│   │   ├── backlog.js                  # Backlog management
+│   │   ├── integrations.js             # Third-party integrations
+│   │   ├── pmsIntegration.js           # PMS connections
+│   │   ├── pmsSyncService.js           # PMS data sync
+│   │   └── disputeCompanies.js         # Dispute company integrations
+│   ├── data/
+│   │   └── mockData.js                 # Mock data for development
 │   ├── utils/
-│   │   ├── logger.js               # Winston logging
-│   │   └── validators.js           # Zod schemas
+│   │   ├── logger.js                   # Winston logging
+│   │   └── validators.js              # Zod schemas
 │   ├── prisma/
-│   │   ├── schema.prisma           # Database schema
-│   │   └── seed.js                 # Initial data
-│   ├── uploads/                    # Local file storage
-│   ├── .env                        # Backend config
-│   ├── .env.example                # Config template
-│   ├── Dockerfile                  # Container build
+│   │   ├── schema.prisma               # Database schema
+│   │   └── seed.js                     # Database seeding
+│   ├── uploads/                        # Local file storage
+│   ├── .env                            # Backend config
+│   ├── .env.example                    # Config template
+│   ├── Dockerfile                      # Production container
+│   ├── Dockerfile.dev                  # Development container (hot-reload)
 │   └── package.json
 │
-├── docker-compose.yml              # Container orchestration
-├── DEPLOYMENT.md                   # Deployment guide
-├── README.md                       # Project documentation
-└── AccuDefend_System_Design.md     # System architecture
+├── infrastructure/
+│   └── aws/
+│       ├── main.tf                     # Terraform infrastructure
+│       └── variables.tf                # Infrastructure variables
+├── docker-compose.yml                  # Production container orchestration
+├── docker-compose.dev.yml              # Development environment
+├── start-dev.sh                        # Development startup script
+├── start-production.sh                 # Production startup script
+├── start-frontend.sh                   # Frontend-only startup script
+├── DEPLOYMENT.md                       # Deployment guide
+├── README.md                           # Project documentation
+└── AccuDefend_System_Design.md         # System architecture
 ```
 
 ### 15.4 Quick Start Commands
