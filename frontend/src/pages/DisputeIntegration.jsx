@@ -106,7 +106,7 @@ const DISPUTE_COMPANIES = {
     {
       id: 'VERIFI',
       name: 'Verifi (Visa)',
-      fullName: 'Verifi (Visa)',
+      fullName: 'Verifi (Visa CDRN)',
       logo: '💳',
       twoWaySync: true,
       category: 'network',
@@ -124,6 +124,151 @@ const DISPUTE_COMPANIES = {
       features: ['Consumer Clarity', 'Alerts', 'Eliminator', 'Issuer Network'],
       description: 'Mastercard-owned collaborative fraud and dispute resolution',
       authType: 'api_key'
+    },
+    {
+      id: 'VISA_VROL',
+      name: 'Visa VROL',
+      fullName: 'Visa Resolve Online (VROL)',
+      logo: '🟦',
+      twoWaySync: true,
+      category: 'network',
+      features: ['Disputes', 'Pre-Arbitration', 'Arbitration', 'TC40 Reports', 'CE3 Evidence'],
+      description: 'Visa\'s official dispute resolution platform with full lifecycle management',
+      authType: 'oauth2'
+    },
+    {
+      id: 'MASTERCOM',
+      name: 'Mastercom',
+      fullName: 'Mastercard Mastercom',
+      logo: '🟠',
+      twoWaySync: true,
+      category: 'network',
+      features: ['Chargebacks', 'Second Presentment', 'Arbitration', 'IPM Data', 'Ethoca Collab'],
+      description: 'Mastercard\'s dispute resolution with IPM messaging and Ethoca collaboration',
+      authType: 'oauth2'
+    },
+    {
+      id: 'AMEX_MERCHANT',
+      name: 'AMEX Portal',
+      fullName: 'American Express Merchant Portal',
+      logo: '🟢',
+      twoWaySync: true,
+      category: 'network',
+      features: ['Chargebacks', 'Inquiries', 'Adjustments', 'SafeKey', 'Evidence Submission'],
+      description: 'American Express direct merchant dispute management portal',
+      authType: 'api_key'
+    },
+    {
+      id: 'DISCOVER_DISPUTE',
+      name: 'Discover Dispute',
+      fullName: 'Discover Dispute Management',
+      logo: '🟧',
+      twoWaySync: true,
+      category: 'network',
+      features: ['Retrievals', 'Chargebacks', 'Pre-Arbitration', 'Evidence Submission'],
+      description: 'Discover Network direct dispute and retrieval management platform',
+      authType: 'api_key'
+    }
+  ],
+  processors: [
+    {
+      id: 'STRIPE',
+      name: 'Stripe',
+      fullName: 'Stripe Disputes',
+      logo: '💜',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Disputes', 'Evidence Upload', 'Close Dispute', 'File Uploads', 'Webhooks'],
+      description: 'Full dispute lifecycle via Stripe API with evidence and file uploads',
+      authType: 'api_key'
+    },
+    {
+      id: 'SQUARE',
+      name: 'Square',
+      fullName: 'Square Disputes',
+      logo: '⬛',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Disputes', 'Evidence Submission', 'Accept Dispute', 'Webhooks'],
+      description: 'Square dispute management with evidence submission and acceptance',
+      authType: 'oauth2'
+    },
+    {
+      id: 'FISERV',
+      name: 'Fiserv',
+      fullName: 'Fiserv (First Data)',
+      logo: '🔷',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Disputes', 'Evidence', 'Representment', 'ClientLine', 'Clover'],
+      description: 'First Data/Fiserv dispute management with ClientLine and Clover integration',
+      authType: 'oauth2'
+    },
+    {
+      id: 'WORLDPAY',
+      name: 'Worldpay',
+      fullName: 'Worldpay (FIS)',
+      logo: '🌍',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Disputes', 'Evidence Submission', 'Representment', 'Multi-Currency'],
+      description: 'Worldpay/FIS dispute portal with global multi-currency support',
+      authType: 'api_key'
+    },
+    {
+      id: 'ELAVON',
+      name: 'Elavon',
+      fullName: 'Elavon',
+      logo: '🏦',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Disputes', 'Evidence', 'Representment', 'Converge Gateway'],
+      description: 'Elavon/US Bank dispute management with Converge gateway integration',
+      authType: 'api_key'
+    },
+    {
+      id: 'CHASE_MERCHANT',
+      name: 'Chase',
+      fullName: 'Chase Merchant Services',
+      logo: '🏛️',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Chargebacks', 'Evidence Submission', 'Representment', 'Webhooks'],
+      description: 'JPMorgan Chase merchant services dispute management portal',
+      authType: 'oauth2'
+    },
+    {
+      id: 'GLOBAL_PAYMENTS',
+      name: 'Global Payments',
+      fullName: 'Global Payments',
+      logo: '🌐',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Disputes', 'Evidence', 'Representment', 'GP API', 'Multi-Network'],
+      description: 'Global Payments dispute management with multi-network processing',
+      authType: 'api_key'
+    },
+    {
+      id: 'TSYS',
+      name: 'TSYS',
+      fullName: 'TSYS',
+      logo: '📟',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Chargebacks', 'Evidence Submission', 'Representment', 'Retrievals'],
+      description: 'TSYS/Global Payments processing platform dispute management',
+      authType: 'api_key'
+    },
+    {
+      id: 'AUTHORIZE_NET',
+      name: 'Authorize.net',
+      fullName: 'Authorize.net',
+      logo: '🔐',
+      twoWaySync: true,
+      category: 'processors',
+      features: ['Chargebacks', 'Evidence Submission', 'Representment', 'Webhooks'],
+      description: 'Visa-owned payment gateway with dispute and evidence management',
+      authType: 'api_key'
     }
   ],
   general: [
@@ -134,19 +279,52 @@ const DISPUTE_COMPANIES = {
       logo: '🚨',
       twoWaySync: true,
       category: 'general',
-      features: ['Prevention', 'Recovery', 'Analytics', 'ROI Guarantee'],
-      description: 'End-to-end chargeback management with prevention and recovery',
+      features: ['Prevention', 'Recovery', 'Analytics', 'ROI Tracking', 'Auto Respond'],
+      description: 'End-to-end chargeback management with prevention, recovery, and ROI guarantee',
+      authType: 'api_key'
+    },
+    {
+      id: 'KOUNT',
+      name: 'Kount',
+      fullName: 'Kount (Equifax)',
+      logo: '🛡️',
+      twoWaySync: true,
+      category: 'general',
+      features: ['Disputes', 'Risk Scoring', 'Device Fingerprinting', 'Identity Trust'],
+      description: 'Equifax-owned fraud prevention with AI risk scoring and dispute management',
+      authType: 'api_key'
+    },
+    {
+      id: 'MIDIGATOR',
+      name: 'Midigator',
+      fullName: 'Midigator by CAVU',
+      logo: '📊',
+      twoWaySync: true,
+      category: 'general',
+      features: ['Root Cause Analysis', 'Auto Representment', 'Intelligent Routing', 'Prevention Alerts'],
+      description: 'Intelligent dispute management with root cause analysis and auto-representment',
+      authType: 'api_key'
+    },
+    {
+      id: 'SIGNIFYD',
+      name: 'Signifyd',
+      fullName: 'Signifyd',
+      logo: '✅',
+      twoWaySync: true,
+      category: 'general',
+      features: ['Guaranteed Protection', 'Abuse Prevention', 'Payment Optimization', 'Chargeback Recovery'],
+      description: 'Guaranteed fraud protection with chargeback recovery and abuse prevention',
       authType: 'api_key'
     },
     {
       id: 'RISKIFIED',
       name: 'Riskified',
-      fullName: 'Riskified Dispute Resolve',
+      fullName: 'Riskified',
       logo: '🔒',
       twoWaySync: true,
       category: 'general',
-      features: ['Debt Recovery', 'Auto Representment', 'Fraud Prevention'],
-      description: 'Dispute automation with auto-compiling evidence at scale',
+      features: ['Chargeback Guarantee', 'Fraud Detection', 'Policy Abuse', 'Behavioral Analytics'],
+      description: 'Chargeback guarantee with behavioral analytics and fraud detection at scale',
       authType: 'api_key'
     },
     {
@@ -158,17 +336,6 @@ const DISPUTE_COMPANIES = {
       category: 'general',
       features: ['Real-time Alerts', 'Evidence Compilation', 'Prevention'],
       description: 'Automated chargeback prevention with real-time alerts',
-      authType: 'api_key'
-    },
-    {
-      id: 'MIDIGATOR',
-      name: 'Midigator',
-      fullName: 'Midigator by CAVU',
-      logo: '📊',
-      twoWaySync: true,
-      category: 'general',
-      features: ['Dispute Intelligence', 'Auto Responses', 'Analytics'],
-      description: 'Intelligent dispute management with comprehensive analytics',
       authType: 'api_key'
     },
     {
@@ -189,6 +356,7 @@ const DISPUTE_COMPANIES = {
 const ALL_COMPANIES = [
   ...DISPUTE_COMPANIES.hospitality,
   ...DISPUTE_COMPANIES.network,
+  ...DISPUTE_COMPANIES.processors,
   ...DISPUTE_COMPANIES.general
 ];
 
@@ -390,6 +558,17 @@ export default function DisputeIntegration() {
                 </div>
               </div>
             )}
+            {selectedCompany.authType === 'oauth2' && (
+              <div className="p-3 bg-amber-50 rounded-lg">
+                <div className="flex items-center space-x-2 text-amber-700">
+                  <Key className="w-4 h-4" />
+                  <span className="text-sm font-medium">OAuth2 Authentication</span>
+                </div>
+                <p className="text-xs text-amber-600 mt-1">
+                  This platform uses OAuth2. You'll be redirected to authorize after connecting.
+                </p>
+              </div>
+            )}
           </div>
 
           {selectedCompany.twoWaySync && (
@@ -495,8 +674,8 @@ export default function DisputeIntegration() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dispute Companies Integration</h1>
-          <p className="text-gray-500 mt-1">Connect to dispute management platforms including Merlink 2-way sync</p>
+          <h1 className="text-2xl font-bold text-gray-900">Dispute & Chargeback Portal Integration</h1>
+          <p className="text-gray-500 mt-1">Connect to {ALL_COMPANIES.length} dispute platforms, card networks, and merchant processors with 2-way sync</p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center space-x-2">
           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
@@ -656,7 +835,31 @@ export default function DisputeIntegration() {
             )}
           </div>
 
-          {/* General Platforms Section */}
+          {/* Merchant Processors Section */}
+          <div>
+            <button
+              onClick={() => setExpandedCategory(expandedCategory === 'processors' ? '' : 'processors')}
+              className="w-full flex items-center justify-between px-4 py-3 bg-green-50 rounded-lg mb-4"
+            >
+              <div className="flex items-center space-x-2">
+                <Activity className="w-5 h-5 text-green-600" />
+                <span className="font-semibold text-green-900">Direct Merchant Processors</span>
+                <span className="text-sm text-green-600">({DISPUTE_COMPANIES.processors.length} services)</span>
+              </div>
+              {expandedCategory === 'processors' ? (
+                <ChevronDown className="w-5 h-5 text-green-600" />
+              ) : (
+                <ChevronRight className="w-5 h-5 text-green-600" />
+              )}
+            </button>
+            {expandedCategory === 'processors' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {DISPUTE_COMPANIES.processors.map(company => renderCompanyCard(company))}
+              </div>
+            )}
+          </div>
+
+          {/* General / Third-Party Platforms Section */}
           <div>
             <button
               onClick={() => setExpandedCategory(expandedCategory === 'general' ? '' : 'general')}
@@ -664,7 +867,7 @@ export default function DisputeIntegration() {
             >
               <div className="flex items-center space-x-2">
                 <Shield className="w-5 h-5 text-gray-600" />
-                <span className="font-semibold text-gray-900">General Dispute Platforms</span>
+                <span className="font-semibold text-gray-900">Third-Party Chargeback Management</span>
                 <span className="text-sm text-gray-600">({DISPUTE_COMPANIES.general.length} services)</span>
               </div>
               {expandedCategory === 'general' ? (

@@ -36,12 +36,14 @@ import {
   AlertOctagon
 } from 'lucide-react';
 
-// PMS Systems with their details
+// PMS Systems with their details - organized by category
 const PMS_SYSTEMS = [
+  // ── Enterprise / Full-Service Hotel PMS ─────────────────────────
   {
     id: 'AUTOCLERK',
     name: 'AutoClerk PMS',
     logo: '🏨',
+    category: 'Enterprise',
     authType: 'api_key',
     twoWaySync: true,
     features: ['Real-time Sync', 'Auto Evidence', 'Guest Flags', 'Document Upload'],
@@ -51,6 +53,7 @@ const PMS_SYSTEMS = [
     id: 'OPERA_CLOUD',
     name: 'Oracle Opera Cloud',
     logo: '🔴',
+    category: 'Enterprise',
     authType: 'oauth2',
     twoWaySync: true,
     features: ['OAuth 2.0', 'Webhooks', 'Document Sync', 'Guest Notes'],
@@ -60,6 +63,7 @@ const PMS_SYSTEMS = [
     id: 'MEWS',
     name: 'Mews Systems',
     logo: '🟢',
+    category: 'Enterprise',
     authType: 'api_key',
     twoWaySync: true,
     features: ['API Integration', 'Real-time Events', 'Billing Sync'],
@@ -69,82 +73,277 @@ const PMS_SYSTEMS = [
     id: 'CLOUDBEDS',
     name: 'Cloudbeds',
     logo: '☁️',
+    category: 'Enterprise',
     authType: 'oauth2',
     twoWaySync: true,
     features: ['OAuth 2.0', 'Guest Profiles', 'Payment Records'],
     description: 'All-in-one hospitality management platform'
   },
   {
-    id: 'PROTEL',
-    name: 'protel PMS',
-    logo: '🔵',
-    authType: 'basic',
+    id: 'AGILYSYS',
+    name: 'Agilysys LMS/Stay',
+    logo: '🏛️',
+    category: 'Enterprise',
+    authType: 'api_key',
     twoWaySync: true,
-    features: ['Basic Auth', 'Folio Export', 'Guest Data'],
-    description: 'Industry-leading hotel management software'
+    features: ['API Key', 'Spa/Golf/Dining', 'Document Sync', 'Guest Flags'],
+    description: 'Enterprise resort PMS with spa, golf, and dining integrations'
+  },
+  {
+    id: 'INFOR',
+    name: 'Infor Hospitality HMS',
+    logo: '🔷',
+    category: 'Enterprise',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['OAuth 2.0', 'Webhooks', 'Documents', 'Guest Notes'],
+    description: 'Enterprise-grade hospitality management system'
   },
   {
     id: 'STAYNTOUCH',
     name: 'StayNTouch',
     logo: '📱',
+    category: 'Enterprise',
     authType: 'oauth2',
     twoWaySync: true,
-    features: ['Mobile-first', 'Digital Signatures', 'Real-time'],
+    features: ['Mobile-first', 'Digital Signatures', 'Real-time', 'Mobile Check-in'],
     description: 'Mobile PMS with digital signature capture'
-  },
-  {
-    id: 'APALEO',
-    name: 'Apaleo',
-    logo: '🟣',
-    authType: 'oauth2',
-    twoWaySync: true,
-    features: ['Open API', 'Webhooks', 'Folio Access'],
-    description: 'Open hospitality platform with extensive API'
-  },
-  {
-    id: 'INNROAD',
-    name: 'innRoad',
-    logo: '🛣️',
-    authType: 'oauth2',
-    twoWaySync: true,
-    features: ['Cloud-based', 'Reporting', 'Payment Integration'],
-    description: 'Cloud-based property management for independents'
-  },
-  {
-    id: 'WEBREZPRO',
-    name: 'WebRezPro',
-    logo: '🌐',
-    authType: 'api_key',
-    twoWaySync: false,
-    features: ['API Access', 'Booking Data', 'Guest Info'],
-    description: 'Cloud-based PMS for small to mid-size properties'
-  },
-  {
-    id: 'ROOMMASTER',
-    name: 'RoomMaster',
-    logo: '🏠',
-    authType: 'basic',
-    twoWaySync: false,
-    features: ['Legacy Support', 'Basic Export', 'Folio Data'],
-    description: 'Trusted PMS solution for hotels worldwide'
-  },
-  {
-    id: 'LITTLE_HOTELIER',
-    name: 'Little Hotelier',
-    logo: '🏡',
-    authType: 'api_key',
-    twoWaySync: false,
-    features: ['Small Properties', 'Simple Integration'],
-    description: 'Designed for small accommodation providers'
   },
   {
     id: 'ROOMKEY',
     name: 'RoomKeyPMS',
     logo: '🔑',
+    category: 'Enterprise',
     authType: 'api_key',
     twoWaySync: true,
-    features: ['API Access', 'Guest Profiles', 'Billing'],
+    features: ['API Access', 'Guest Profiles', 'Billing', 'Webhooks'],
     description: 'Cloud-based hotel management software'
+  },
+  {
+    id: 'MAESTRO',
+    name: 'Maestro PMS',
+    logo: '🎵',
+    category: 'Enterprise',
+    authType: 'basic',
+    twoWaySync: true,
+    features: ['Basic Auth', 'Spa/Activities', 'Documents', 'Guest Flags'],
+    description: 'Independent hotel PMS with spa and activities management'
+  },
+  {
+    id: 'HOTELOGIX',
+    name: 'Hotelogix',
+    logo: '🌟',
+    category: 'Enterprise',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Webhooks', 'Guest Profiles', 'Billing Sync'],
+    description: 'Cloud PMS for mid-scale hotels worldwide'
+  },
+  {
+    id: 'RMS_CLOUD',
+    name: 'RMS Cloud',
+    logo: '⛅',
+    category: 'Enterprise',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['OAuth 2.0', 'Webhooks', 'Guest Flags', 'Rate Management'],
+    description: 'Property management for all sizes of accommodation'
+  },
+  {
+    id: 'PROTEL',
+    name: 'protel PMS',
+    logo: '🔵',
+    category: 'Enterprise',
+    authType: 'basic',
+    twoWaySync: true,
+    features: ['Basic Auth', 'Folio Export', 'Guest Data', 'Documents'],
+    description: 'Industry-leading hotel management software'
+  },
+  {
+    id: 'EZEE',
+    name: 'eZee Absolute',
+    logo: '🟡',
+    category: 'Enterprise',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Webhooks', 'Guest Profiles', 'Folios'],
+    description: 'Cloud-based hotel PMS by eZee Technosys'
+  },
+  {
+    id: 'SIHOT',
+    name: 'SIHOT PMS',
+    logo: '🇩🇪',
+    category: 'Enterprise',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Webhooks', 'Documents', 'Guest Flags'],
+    description: 'German-engineered hotel management system'
+  },
+  {
+    id: 'INNROAD',
+    name: 'innRoad',
+    logo: '🛣️',
+    category: 'Enterprise',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['OAuth 2.0', 'Webhooks', 'Reporting', 'Payment Integration'],
+    description: 'Cloud-based property management for independents'
+  },
+
+  // ── Limited Service / Boutique / Independent PMS ────────────────
+  {
+    id: 'LITTLE_HOTELIER',
+    name: 'Little Hotelier',
+    logo: '🏡',
+    category: 'Boutique',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Small Properties', 'Guest Profiles'],
+    description: 'Designed for small accommodation providers'
+  },
+  {
+    id: 'FRONTDESK_ANYWHERE',
+    name: 'Frontdesk Anywhere',
+    logo: '🖥️',
+    category: 'Boutique',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['OAuth 2.0', 'Cloud-based', 'Webhooks', 'Guest Profiles'],
+    description: 'Cloud-based PMS for boutique hotels'
+  },
+  {
+    id: 'WEBREZPRO',
+    name: 'WebRezPro',
+    logo: '🌐',
+    category: 'Boutique',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Access', 'Booking Data', 'Guest Info', 'Folios'],
+    description: 'Cloud-based PMS for small to mid-size properties'
+  },
+  {
+    id: 'THINK_RESERVATIONS',
+    name: 'ThinkReservations',
+    logo: '💭',
+    category: 'Boutique',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Webhooks', 'Guest Profiles', 'B&B Focused'],
+    description: 'PMS built for B&Bs and boutique properties'
+  },
+  {
+    id: 'RESNEXUS',
+    name: 'ResNexus',
+    logo: '🏕️',
+    category: 'Boutique',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Webhooks', 'Guest Profiles', 'Multi-property'],
+    description: 'PMS for campgrounds, lodges, B&Bs, and small hotels'
+  },
+  {
+    id: 'GUESTLINE',
+    name: 'Guestline',
+    logo: '🇬🇧',
+    category: 'Boutique',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['OAuth 2.0', 'Webhooks', 'Documents', 'Guest Flags'],
+    description: 'UK-based hospitality PMS with full API access'
+  },
+
+  // ── Vacation Rental / Hybrid PMS ────────────────────────────────
+  {
+    id: 'GUESTY',
+    name: 'Guesty',
+    logo: '🏠',
+    category: 'Vacation Rental',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['OAuth 2.0', 'Multi-channel', 'Listings', 'Webhooks'],
+    description: 'Vacation rental management with multi-channel distribution'
+  },
+  {
+    id: 'HOSTAWAY',
+    name: 'Hostaway',
+    logo: '🌴',
+    category: 'Vacation Rental',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Webhooks', 'Listings', 'Guest Profiles'],
+    description: 'All-in-one vacation rental management platform'
+  },
+  {
+    id: 'LODGIFY',
+    name: 'Lodgify',
+    logo: '🛏️',
+    category: 'Vacation Rental',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Webhooks', 'Properties', 'Guest Profiles'],
+    description: 'Vacation rental software with website builder'
+  },
+  {
+    id: 'ESCAPIA',
+    name: 'Escapia (Vrbo)',
+    logo: '🏖️',
+    category: 'Vacation Rental',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['API Key', 'Guest Profiles', 'Folios', 'Rates'],
+    description: 'HomeAway/Vrbo vacation rental management'
+  },
+
+  // ── Brand-Specific PMS ──────────────────────────────────────────
+  {
+    id: 'MARRIOTT_GXP',
+    name: 'Marriott GXP/FSPMS',
+    logo: '🔶',
+    category: 'Brand',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['Marriott Bonvoy', 'Brand Compliance', 'M Live Alerts', 'Documents'],
+    description: 'Marriott International proprietary guest experience platform'
+  },
+  {
+    id: 'HILTON_ONQ',
+    name: 'Hilton OnQ PMS',
+    logo: '🔷',
+    category: 'Brand',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['Hilton Honors', 'Digital Key', 'Connected Room', 'Documents'],
+    description: 'Hilton proprietary property management platform'
+  },
+  {
+    id: 'HYATT_OPERA',
+    name: 'Hyatt Opera PMS',
+    logo: '🟠',
+    category: 'Brand',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['World of Hyatt', 'FIND Platform', 'Guest Flags', 'Documents'],
+    description: 'Hyatt Hotels customized OPERA PMS deployment'
+  },
+  {
+    id: 'IHG_CONCERTO',
+    name: 'IHG Concerto',
+    logo: '🟤',
+    category: 'Brand',
+    authType: 'oauth2',
+    twoWaySync: true,
+    features: ['IHG One Rewards', 'Guest Recognition', 'Documents', 'Webhooks'],
+    description: 'IHG Hotels & Resorts next-gen cloud PMS platform'
+  },
+  {
+    id: 'BEST_WESTERN',
+    name: 'Best Western Hotels',
+    logo: '🟡',
+    category: 'Brand',
+    authType: 'api_key',
+    twoWaySync: true,
+    features: ['BW Rewards', 'Guest Profiles', 'Webhooks', 'Guest Flags'],
+    description: 'Best Western Hotels & Resorts centralized PMS integration'
   }
 ];
 
@@ -568,11 +767,16 @@ export default function PMSIntegration() {
             </div>
           )}
 
-          {/* Available PMS Systems */}
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-4">Available PMS Systems</h3>
+          {/* Available PMS Systems - Grouped by Category */}
+          {['Enterprise', 'Boutique', 'Vacation Rental', 'Brand'].map((category) => (
+          <div key={category}>
+            <h3 className="font-semibold text-gray-900 mb-4 mt-6 flex items-center space-x-2">
+              <span>{category === 'Enterprise' ? '🏢' : category === 'Boutique' ? '🏡' : category === 'Vacation Rental' ? '🌴' : '⭐'}</span>
+              <span>{category} PMS Systems</span>
+              <span className="text-sm font-normal text-gray-400">({PMS_SYSTEMS.filter(p => p.category === category).length})</span>
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {PMS_SYSTEMS.map((pms) => {
+              {PMS_SYSTEMS.filter(p => p.category === category).map((pms) => {
                 const isConnected = connections.some(c => c.pmsType === pms.id);
                 return (
                   <div
@@ -628,6 +832,7 @@ export default function PMSIntegration() {
               })}
             </div>
           </div>
+          ))}
         </div>
       )}
 
