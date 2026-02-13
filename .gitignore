@@ -38,3 +38,6 @@ coverage/
 # Temp files
 *.tmp
 *.temp
+
+# Original .docx documents (md versions are tracked instead)
+*.docx
