@@ -31,7 +31,8 @@ import {
   Building2,
   Shield,
   Hash,
-  Clock
+  Clock,
+  Search
 } from 'lucide-react';
 import { api, formatCurrency, formatDate, formatDateTime } from '../utils/api';
 import GuestFolioViewer from './GuestFolioViewer';

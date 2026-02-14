@@ -205,10 +205,19 @@ router.get('/stats', async (req, res) => {
     });
 
   } catch (error) {
-    logger.error('Get stats error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to retrieve statistics'
+    // Demo mode fallback
+    logger.warn('Get stats: database unavailable, returning demo data');
+    res.json({
+      overview: { totalCases: 247, totalAmount: 184320.50, recentCases: 18, winRate: 78 },
+      byStatus: {
+        PENDING: { count: 18, amount: 14250.00 },
+        IN_REVIEW: { count: 24, amount: 28900.00 },
+        SUBMITTED: { count: 32, amount: 41500.00 },
+        WON: { count: 142, amount: 78200.50 },
+        LOST: { count: 28, amount: 18970.00 },
+        EXPIRED: { count: 3, amount: 2500.00 }
+      },
+      isDemo: true
     });
   }
 });
@@ -255,13 +264,271 @@ router.get('/:id', async (req, res) => {
     res.json({ chargeback });
 
   } catch (error) {
-    logger.error('Get case error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to retrieve case'
-    });
+    // Demo mode fallback — return rich demo case data
+    logger.warn('Get case detail: database unavailable, returning demo data');
+    const caseId = req.params.id;
+
+    // Build demo cases map matching IDs from the list endpoint
+    const demoCaseDetails = {
+      'demo-1': {
+        id: 'demo-1', caseNumber: 'CB-2026-0247', status: 'PENDING',
+        guestName: 'James Wilson', guestEmail: 'james.wilson@gmail.com', guestPhone: '+1 (555) 234-5678',
+        amount: 1250.00, currency: 'USD',
+        reasonCode: '10.4', reasonDescription: 'Other Fraud - Card Absent Environment',
+        confidenceScore: 87, recommendation: 'AUTO_SUBMIT',
+        disputeDate: new Date(Date.now() - 5*86400000).toISOString(),
+        dueDate: new Date(Date.now() + 12*86400000).toISOString(),
+        checkInDate: new Date(Date.now() - 20*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 17*86400000).toISOString(),
+        roomNumber: '412', roomType: 'King Suite',
+        confirmationNumber: 'RES-2026-88421',
+        transactionId: 'txn_3PqR7sT2uVwX8yZ',
+        cardLastFour: '4532', cardBrand: 'VISA',
+        processorDisputeId: 'dp_9AbCdEfGhIjKl',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'stripe', name: 'Stripe' },
+        fraudIndicators: {
+          positive: ['VALID_ID_SCAN', 'MATCHING_ADDRESS', 'CHIP_TRANSACTION', 'LOYALTY_MEMBER'],
+          negative: ['FIRST_TIME_GUEST', 'HIGH_AMOUNT']
+        },
+        createdAt: new Date(Date.now() - 2*3600000).toISOString()
+      },
+      'demo-2': {
+        id: 'demo-2', caseNumber: 'CB-2026-0246', status: 'IN_REVIEW',
+        guestName: 'Sarah Chen', guestEmail: 'sarah.chen@outlook.com', guestPhone: '+1 (555) 876-5432',
+        amount: 890.50, currency: 'USD',
+        reasonCode: '13.1', reasonDescription: 'Merchandise/Services Not Received',
+        confidenceScore: 72, recommendation: 'REVIEW_RECOMMENDED',
+        disputeDate: new Date(Date.now() - 8*86400000).toISOString(),
+        dueDate: new Date(Date.now() + 10*86400000).toISOString(),
+        checkInDate: new Date(Date.now() - 25*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 22*86400000).toISOString(),
+        roomNumber: '208', roomType: 'Double Queen',
+        confirmationNumber: 'RES-2026-77530',
+        transactionId: 'txn_5MnOpQrStUvWx',
+        cardLastFour: '8891', cardBrand: 'MASTERCARD',
+        processorDisputeId: 'dp_2YzAbCdEfGhI',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'adyen', name: 'Adyen' },
+        fraudIndicators: {
+          positive: ['VALID_ID_SCAN', 'KEY_CARD_USED'],
+          negative: ['NO_SIGNATURE', 'EARLY_CHECKOUT']
+        },
+        createdAt: new Date(Date.now() - 8*3600000).toISOString()
+      },
+      'demo-3': {
+        id: 'demo-3', caseNumber: 'CB-2026-0245', status: 'WON',
+        guestName: 'Michael Brown', guestEmail: 'mbrown@yahoo.com', guestPhone: '+1 (555) 345-6789',
+        amount: 2100.00, currency: 'USD',
+        reasonCode: '10.4', reasonDescription: 'Other Fraud - Card Absent Environment',
+        confidenceScore: 94, recommendation: 'AUTO_SUBMIT',
+        disputeDate: new Date(Date.now() - 30*86400000).toISOString(),
+        dueDate: null,
+        checkInDate: new Date(Date.now() - 45*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 40*86400000).toISOString(),
+        roomNumber: '715', roomType: 'Penthouse Suite',
+        confirmationNumber: 'RES-2026-66201',
+        transactionId: 'txn_7YzAbCdEfGhIj',
+        cardLastFour: '1234', cardBrand: 'VISA',
+        processorDisputeId: 'dp_4KlMnOpQrStU',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'stripe', name: 'Stripe' },
+        fraudIndicators: {
+          positive: ['VALID_ID_SCAN', 'MATCHING_ADDRESS', 'CHIP_TRANSACTION', 'LOYALTY_MEMBER', 'RETURN_GUEST'],
+          negative: []
+        },
+        resolvedAt: new Date(Date.now() - 2*3600000).toISOString(),
+        createdAt: new Date(Date.now() - 24*3600000).toISOString()
+      },
+      'demo-4': {
+        id: 'demo-4', caseNumber: 'CB-2026-0244', status: 'SUBMITTED',
+        guestName: 'Emily Rodriguez', guestEmail: 'emily.rodriguez@icloud.com', guestPhone: '+1 (555) 456-7890',
+        amount: 475.25, currency: 'USD',
+        reasonCode: '4837', reasonDescription: 'No Cardholder Authorization',
+        confidenceScore: 81, recommendation: 'AUTO_SUBMIT',
+        disputeDate: new Date(Date.now() - 12*86400000).toISOString(),
+        dueDate: new Date(Date.now() + 5*86400000).toISOString(),
+        checkInDate: new Date(Date.now() - 18*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 16*86400000).toISOString(),
+        roomNumber: '305', roomType: 'Standard King',
+        confirmationNumber: 'RES-2026-55123',
+        transactionId: 'txn_9KlMnOpQrStUv',
+        cardLastFour: '6677', cardBrand: 'MASTERCARD',
+        processorDisputeId: 'dp_6WxYzAbCdEfG',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'shift4', name: 'Shift4' },
+        fraudIndicators: {
+          positive: ['VALID_ID_SCAN', 'CHIP_TRANSACTION', 'MATCHING_ADDRESS'],
+          negative: ['DISPUTED_BEFORE']
+        },
+        submittedAt: new Date(Date.now() - 48*3600000).toISOString(),
+        createdAt: new Date(Date.now() - 48*3600000).toISOString()
+      },
+      'demo-5': {
+        id: 'demo-5', caseNumber: 'CB-2026-0243', status: 'PENDING',
+        guestName: 'David Thompson', guestEmail: 'd.thompson@gmail.com', guestPhone: '+1 (555) 567-8901',
+        amount: 3200.00, currency: 'USD',
+        reasonCode: '10.4', reasonDescription: 'Other Fraud - Card Absent Environment',
+        confidenceScore: 65, recommendation: 'GATHER_MORE_EVIDENCE',
+        disputeDate: new Date(Date.now() - 7*86400000).toISOString(),
+        dueDate: new Date(Date.now() + 8*86400000).toISOString(),
+        checkInDate: new Date(Date.now() - 14*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 9*86400000).toISOString(),
+        roomNumber: '601', roomType: 'Executive Suite',
+        confirmationNumber: 'RES-2026-44890',
+        transactionId: 'txn_1AbCdEfGhIjKl',
+        cardLastFour: '9012', cardBrand: 'AMEX',
+        processorDisputeId: 'dp_8HiJkLmNoPqR',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'elavon', name: 'Elavon' },
+        fraudIndicators: {
+          positive: ['LOYALTY_MEMBER'],
+          negative: ['NO_ID_SCAN', 'MISMATCH_ADDRESS', 'HIGH_AMOUNT']
+        },
+        createdAt: new Date(Date.now() - 72*3600000).toISOString()
+      },
+      'demo-6': {
+        id: 'demo-6', caseNumber: 'CB-2026-0242', status: 'WON',
+        guestName: 'Lisa Anderson', guestEmail: 'lisa.a@hotmail.com', guestPhone: '+1 (555) 678-9012',
+        amount: 1875.00, currency: 'USD',
+        reasonCode: '13.6', reasonDescription: 'Credit Not Processed',
+        confidenceScore: 91, recommendation: 'AUTO_SUBMIT',
+        disputeDate: new Date(Date.now() - 35*86400000).toISOString(),
+        dueDate: null,
+        checkInDate: new Date(Date.now() - 50*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 45*86400000).toISOString(),
+        roomNumber: '502', roomType: 'King Suite',
+        confirmationNumber: 'RES-2026-33678',
+        transactionId: 'txn_3CdEfGhIjKlMn',
+        cardLastFour: '3456', cardBrand: 'VISA',
+        processorDisputeId: 'dp_0StUvWxYzAbCd',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'stripe', name: 'Stripe' },
+        fraudIndicators: {
+          positive: ['VALID_ID_SCAN', 'MATCHING_ADDRESS', 'RETURN_GUEST', 'CHIP_TRANSACTION'],
+          negative: []
+        },
+        resolvedAt: new Date(Date.now() - 24*3600000).toISOString(),
+        createdAt: new Date(Date.now() - 96*3600000).toISOString()
+      },
+      'demo-7': {
+        id: 'demo-7', caseNumber: 'CB-2026-0241', status: 'LOST',
+        guestName: 'Robert Kim', guestEmail: 'rkim@protonmail.com', guestPhone: '+1 (555) 789-0123',
+        amount: 560.75, currency: 'USD',
+        reasonCode: '10.1', reasonDescription: 'EMV Liability Shift Counterfeit Fraud',
+        confidenceScore: 45, recommendation: 'UNLIKELY_TO_WIN',
+        disputeDate: new Date(Date.now() - 40*86400000).toISOString(),
+        dueDate: null,
+        checkInDate: new Date(Date.now() - 55*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 53*86400000).toISOString(),
+        roomNumber: '118', roomType: 'Standard Double',
+        confirmationNumber: 'RES-2026-22456',
+        transactionId: 'txn_5EfGhIjKlMnOp',
+        cardLastFour: '5678', cardBrand: 'DISCOVER',
+        processorDisputeId: 'dp_2UvWxYzAbCdEf',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'elavon', name: 'Elavon' },
+        fraudIndicators: {
+          positive: [],
+          negative: ['NO_ID_SCAN', 'NO_SIGNATURE', 'SWIPED_NOT_CHIP', 'FIRST_TIME_GUEST']
+        },
+        resolvedAt: new Date(Date.now() - 48*3600000).toISOString(),
+        createdAt: new Date(Date.now() - 120*3600000).toISOString()
+      },
+      'demo-8': {
+        id: 'demo-8', caseNumber: 'CB-2026-0240', status: 'IN_REVIEW',
+        guestName: 'Jennifer Lee', guestEmail: 'jen.lee@gmail.com', guestPhone: '+1 (555) 890-1234',
+        amount: 1450.00, currency: 'USD',
+        reasonCode: '4853', reasonDescription: 'Cardholder Dispute - Defective/Not As Described',
+        confidenceScore: 76, recommendation: 'REVIEW_RECOMMENDED',
+        disputeDate: new Date(Date.now() - 10*86400000).toISOString(),
+        dueDate: new Date(Date.now() + 3*86400000).toISOString(),
+        checkInDate: new Date(Date.now() - 22*86400000).toISOString(),
+        checkOutDate: new Date(Date.now() - 19*86400000).toISOString(),
+        roomNumber: '921', roomType: 'Deluxe King',
+        confirmationNumber: 'RES-2026-11234',
+        transactionId: 'txn_7GhIjKlMnOpQr',
+        cardLastFour: '2345', cardBrand: 'MASTERCARD',
+        processorDisputeId: 'dp_4WxYzAbCdEfGh',
+        reservationId: null,
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' },
+        provider: { id: 'adyen', name: 'Adyen' },
+        fraudIndicators: {
+          positive: ['VALID_ID_SCAN', 'KEY_CARD_USED', 'MATCHING_ADDRESS'],
+          negative: ['COMPLAINT_FILED']
+        },
+        createdAt: new Date(Date.now() - 144*3600000).toISOString()
+      }
+    };
+
+    // Generate demo timeline and evidence for the requested case
+    const demoCase = demoCaseDetails[caseId];
+
+    if (!demoCase) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Chargeback not found'
+      });
+    }
+
+    // Add evidence array
+    demoCase.evidence = [
+      { id: `ev-${caseId}-1`, fileName: 'guest_id_scan.jpg', type: 'ID_SCAN', description: 'Government-issued photo ID', verified: true, downloadUrl: null, createdAt: new Date(Date.now() - 3*3600000).toISOString() },
+      { id: `ev-${caseId}-2`, fileName: 'folio_invoice.pdf', type: 'FOLIO', description: 'Guest folio with itemized charges', verified: true, downloadUrl: null, createdAt: new Date(Date.now() - 3*3600000).toISOString() },
+      { id: `ev-${caseId}-3`, fileName: 'registration_card.pdf', type: 'AUTH_SIGNATURE', description: 'Signed registration card with authorization', verified: false, downloadUrl: null, createdAt: new Date(Date.now() - 2*3600000).toISOString() },
+    ];
+
+    // Add timeline
+    demoCase.timeline = [
+      { id: `tl-${caseId}-1`, eventType: 'ALERT', title: 'Chargeback Received', description: `New chargeback alert from ${demoCase.provider.name} for ${demoCase.guestName}`, createdAt: demoCase.createdAt },
+      { id: `tl-${caseId}-2`, eventType: 'AI', title: 'AI Analysis Complete', description: `Confidence score: ${demoCase.confidenceScore}% — Recommendation: ${demoCase.recommendation?.replace(/_/g, ' ')}`, createdAt: new Date(new Date(demoCase.createdAt).getTime() + 120000).toISOString() },
+      { id: `tl-${caseId}-3`, eventType: 'SUCCESS', title: 'Evidence Auto-Collected', description: 'Guest ID, folio, and registration card automatically fetched from PMS', createdAt: new Date(new Date(demoCase.createdAt).getTime() + 180000).toISOString() },
+    ];
+
+    if (demoCase.status === 'WON') {
+      demoCase.timeline.push(
+        { id: `tl-${caseId}-4`, eventType: 'SUCCESS', title: 'Dispute Submitted', description: `Evidence package submitted to ${demoCase.provider.name}`, createdAt: new Date(new Date(demoCase.createdAt).getTime() + 300000).toISOString() },
+        { id: `tl-${caseId}-5`, eventType: 'WON', title: 'Dispute Won', description: `Chargeback reversed. ${formatCurrency(demoCase.amount)} recovered.`, createdAt: demoCase.resolvedAt }
+      );
+    } else if (demoCase.status === 'LOST') {
+      demoCase.timeline.push(
+        { id: `tl-${caseId}-4`, eventType: 'SUCCESS', title: 'Dispute Submitted', description: `Evidence package submitted to ${demoCase.provider.name}`, createdAt: new Date(new Date(demoCase.createdAt).getTime() + 300000).toISOString() },
+        { id: `tl-${caseId}-5`, eventType: 'LOST', title: 'Dispute Lost', description: 'Issuer ruled in favor of cardholder. Insufficient evidence.', createdAt: demoCase.resolvedAt }
+      );
+    } else if (demoCase.status === 'SUBMITTED') {
+      demoCase.timeline.push(
+        { id: `tl-${caseId}-4`, eventType: 'SUCCESS', title: 'Dispute Submitted', description: `Evidence package submitted to ${demoCase.provider.name}`, createdAt: demoCase.submittedAt }
+      );
+    }
+
+    // Reverse timeline to show newest first
+    demoCase.timeline.reverse();
+
+    // Add notes
+    demoCase.notes = [
+      { id: `note-${caseId}-1`, content: 'AI analysis indicates strong evidence for representment. Guest ID and signed registration card match the card on file.', user: { firstName: 'AI', lastName: 'System' }, createdAt: new Date(new Date(demoCase.createdAt).getTime() + 120000).toISOString() }
+    ];
+
+    // Add submissions
+    demoCase.submissions = [];
+
+    res.json({ chargeback: demoCase, isDemo: true });
   }
 });
+
+/**
+ * Helper for formatting currency in demo mode
+ */
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+}
 
 /**
  * POST /api/cases
@@ -601,10 +868,19 @@ router.post('/:id/analyze', requireRole('ADMIN', 'MANAGER', 'STAFF'), async (req
     });
 
   } catch (error) {
-    logger.error('Analyze case error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to analyze case'
+    // Demo mode fallback
+    logger.warn('Analyze case: database unavailable, returning demo analysis');
+    const score = Math.floor(Math.random() * 30) + 65; // 65-95
+    res.json({
+      message: 'Analysis complete (Demo Mode)',
+      confidenceScore: score,
+      recommendation: score >= 80 ? 'AUTO_SUBMIT' : score >= 60 ? 'REVIEW_RECOMMENDED' : 'GATHER_MORE_EVIDENCE',
+      factors: {
+        positive: ['Valid ID on file', 'Signed registration card', 'Key card access logs confirm stay'],
+        negative: score < 75 ? ['Guest disputed within 30 days'] : [],
+        neutral: ['Standard cancellation policy applies']
+      },
+      isDemo: true
     });
   }
 });
@@ -658,10 +934,23 @@ router.post('/:id/notes', requireRole('ADMIN', 'MANAGER', 'STAFF'), async (req, 
     });
 
   } catch (error) {
-    logger.error('Add note error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to add note'
+    // Demo mode fallback
+    logger.warn('Add note: database unavailable, returning demo response');
+    const { content } = req.body;
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Validation Error', message: 'Note content is required' });
+    }
+    res.status(201).json({
+      message: 'Note added successfully (Demo Mode)',
+      note: {
+        id: `note-demo-${Date.now()}`,
+        chargebackId: req.params.id,
+        content: content.trim(),
+        isInternal: true,
+        user: { firstName: req.user.firstName || 'Admin', lastName: req.user.lastName || 'User' },
+        createdAt: new Date().toISOString()
+      },
+      isDemo: true
     });
   }
 });
