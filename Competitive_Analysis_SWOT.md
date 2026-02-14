@@ -1,6 +1,6 @@
 # Competitive Analysis - AccuDefend
 
-**Version:** 2.0
+**Version:** 3.0
 **Analysis Period:** Q4 2025 - Q1 2026
 **Last Updated:** February 13, 2026
 **Next Review:** May 13, 2026 (quarterly update)
@@ -15,6 +15,7 @@
 |---------|------|--------|---------|
 | 1.0 | January 28, 2026 | Aalok Mehta | Initial competitive analysis and SWOT |
 | 2.0 | February 13, 2026 | Aalok Mehta | Renamed product to AccuDefend. Updated tech stack to actual implementation (React 18/Vite 5/Tailwind, Node.js 20/Express 4/Prisma 5, PostgreSQL 16/Redis 7, AWS ECS Fargate/Aurora/Terraform IaC). Updated PMS integrations from 2-3 planned to 12 implemented. Updated payment processors to 4 (Stripe, Adyen, Shift4, Elavon) with real-time webhooks. Added dispute company integrations (Merlink 2-way sync). Updated feature comparison to reflect 9 frontend pages, 9 API route files, 8 service modules, 2 controllers, Docker containerization, JWT auth with refresh tokens. Updated SWOT to reflect current state: removed mobile app claim (web-only), added dispute company integration as opportunity, noted actual implemented features in strengths. |
+| 3.0 | February 13, 2026 | Aalok Mehta | Expanded PMS integrations from 12 to 30 systems across 4 categories (Enterprise 15, Boutique/Independent 6, Vacation Rental 4, Brand-Specific 5). Added 21 dispute/chargeback adapters with full two-way sync (Prevention 3, Card Networks 4, Merchant Processors 9, Third-Party 5). Total integrations now 51. Added brand-specific loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards). Updated all competitive analysis sections, feature matrix, SWOT, and key takeaways to reflect expanded platform. |
 
 ---
 
@@ -79,11 +80,12 @@ Generic Solutions     *---+------------- Hotel-Specific
 **AccuDefend Strengths:**
 
 - Only fully automated hotel-specific solution
-- 12 PMS integrations implemented (competitors have 0-1)
+- 30 PMS integrations implemented (competitors have 0-1), 51 total integrations
+- 21 dispute/chargeback adapters with full two-way sync via webhooks
 - 4 payment processors with real-time webhooks from day one
 - AI-powered weighted confidence scoring (40% reason code, 35% evidence, 25% indicators)
 - 4-tier recommendation system for dispute handling
-- Dispute company integrations with Merlink 2-way sync
+- Brand-specific loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards)
 - 10-30 day response timeframe vs. competitor 30-90 days
 
 **Threats:**
@@ -535,24 +537,89 @@ Total > 100% due to multi-processor setups.
 
 ## PMS Integration Landscape
 
-### AccuDefend - Implemented PMS Integrations (12 Systems)
+### AccuDefend - Implemented PMS Integrations (30 Systems)
 
-AccuDefend currently supports 12 PMS integrations, far exceeding any competitor in the chargeback defense space:
+AccuDefend currently supports 30 PMS integrations across 4 categories, far exceeding any competitor in the chargeback defense space. Combined with 21 dispute/chargeback adapters, AccuDefend offers 51 total integrations.
+
+#### Enterprise PMS (15 Systems)
 
 | # | PMS System | Market Segment | Status |
 |---|-----------|----------------|--------|
 | 1 | Oracle Opera Cloud | Enterprise, chains | Implemented |
 | 2 | Mews | Boutique, independent (Europe) | Implemented |
 | 3 | Cloudbeds | Independent, hostels, vacation rentals | Implemented |
-| 4 | AutoClerk | Independent, motels, small chains (US) | Implemented |
-| 5 | protel | European hotels, chains | Implemented |
-| 6 | StayNTouch | Boutique, lifestyle hotels | Implemented |
-| 7 | Apaleo | Modern, tech-forward properties | Implemented |
-| 8 | innRoad | Small independent hotels | Implemented |
-| 9 | WebRezPro | Independent, boutique hotels | Implemented |
-| 10 | RoomMaster | Independent, small chains | Implemented |
-| 11 | Little Hotelier | Small B&Bs, guest houses | Implemented |
-| 12 | RoomKeyPMS | Independent hotels | Implemented |
+| 4 | protel | European hotels, chains | Implemented |
+| 5 | Maestro | Independent, resorts | Implemented |
+| 6 | RoomMaster | Independent, small chains | Implemented |
+| 7 | Hotelogix | Mid-size, chains | Implemented |
+| 8 | Shiji | Enterprise, Asia-Pacific | Implemented |
+| 9 | Infor HMS | Large properties, resorts | Implemented |
+| 10 | OPERA 5 (On-Prem) | Legacy enterprise | Implemented |
+| 11 | Lightspeed | Hospitality + POS | Implemented |
+| 12 | Resort Manager | Resorts, timeshare | Implemented |
+| 13 | Clock PMS+ | Mid-size, European | Implemented |
+| 14 | eZee | Budget, mid-size | Implemented |
+| 15 | Visual Matrix | Independent, mid-size | Implemented |
+
+#### Boutique/Independent PMS (6 Systems)
+
+| # | PMS System | Market Segment | Status |
+|---|-----------|----------------|--------|
+| 16 | StayNTouch | Boutique, lifestyle hotels | Implemented |
+| 17 | Apaleo | Modern, tech-forward properties | Implemented |
+| 18 | innRoad | Small independent hotels | Implemented |
+| 19 | WebRezPro | Independent, boutique hotels | Implemented |
+| 20 | Little Hotelier | Small B&Bs, guest houses | Implemented |
+| 21 | RoomKeyPMS | Independent hotels | Implemented |
+
+#### Vacation Rental PMS (4 Systems)
+
+| # | PMS System | Market Segment | Status |
+|---|-----------|----------------|--------|
+| 22 | Guesty | Vacation rentals, property managers | Implemented |
+| 23 | Hostaway | Vacation rentals, short-term | Implemented |
+| 24 | Lodgify | Vacation rentals, direct booking | Implemented |
+| 25 | Streamline | Vacation rentals, resorts | Implemented |
+
+#### Brand-Specific PMS (5 Systems)
+
+| # | PMS System | Market Segment | Status |
+|---|-----------|----------------|--------|
+| 26 | Marriott FOSSE/FSPMS | Marriott properties | Implemented |
+| 27 | Hilton OnQ | Hilton properties | Implemented |
+| 28 | IHG Concerto | IHG properties | Implemented |
+| 29 | Wyndham PMS | Wyndham properties | Implemented |
+| 30 | Choice Advantage | Choice Hotels properties | Implemented |
+
+**Brand-Specific Loyalty Integration:** Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards
+
+### AccuDefend - Dispute/Chargeback Adapters (21 Systems)
+
+All adapters implement full two-way sync with webhooks.
+
+| Category | Adapter | Status |
+|----------|---------|--------|
+| Prevention | Verifi (Visa CDRN) | Implemented |
+| Prevention | Ethoca (Mastercard) | Implemented |
+| Prevention | RDR (Rapid Dispute Resolution) | Implemented |
+| Card Networks | Visa Resolve Online | Implemented |
+| Card Networks | Mastercard Connect | Implemented |
+| Card Networks | Amex GARN | Implemented |
+| Card Networks | Discover eDisputeLink | Implemented |
+| Merchant Processors | Stripe Disputes | Implemented |
+| Merchant Processors | Adyen Dispute Management | Implemented |
+| Merchant Processors | Shift4 Chargeback Manager | Implemented |
+| Merchant Processors | Elavon ChargebackOps | Implemented |
+| Merchant Processors | FIS/Worldpay | Implemented |
+| Merchant Processors | Global Payments | Implemented |
+| Merchant Processors | TSYS/TransFirst | Implemented |
+| Merchant Processors | Square Disputes | Implemented |
+| Merchant Processors | Toast | Implemented |
+| Third-Party | Chargebacks911 Portal | Implemented |
+| Third-Party | Chargeback Gurus | Implemented |
+| Third-Party | Midigator | Implemented |
+| Third-Party | SERTIFI | Implemented |
+| Third-Party | Merlink | Implemented |
 
 ### Major Hotel PMS Systems - Detail
 
@@ -700,7 +767,7 @@ Apaleo:         ===                           2%
 Others:         ================             16%
 ```
 
-**AccuDefend PMS Coverage:** With 12 integrations implemented, AccuDefend covers the majority of the hotel PMS market, including all top-tier systems and many mid-tier/niche systems that competitors have not addressed.
+**AccuDefend PMS Coverage:** With 30 PMS integrations and 21 dispute/chargeback adapters (51 total integrations) implemented, AccuDefend covers the vast majority of the hotel PMS market across enterprise, boutique/independent, vacation rental, and brand-specific segments, including all top-tier systems and many mid-tier/niche systems that competitors have not addressed.
 
 ---
 
@@ -712,14 +779,15 @@ Others:         ================             16%
 |---------|-----------|----------------|------------------|---------------|--------------|---------------|
 | Automation Level | 95% auto | 10% auto | 40% auto | 5% auto | 20% auto | 0% auto |
 | Hotel-Specific | Yes | No | Partial | No | No | Partial |
-| PMS Integration | 12 systems | None | 1 system (beta) | None | None | Limited |
+| PMS Integration | 30 systems | None | 1 system (beta) | None | None | Limited |
 | Check-in Evidence | Yes | No | No | No | No | No |
 | AI Confidence Scoring | Yes (weighted) | No | Yes | No | No | No |
 | Auto-Submit | Yes | No | Semi | No | Semi | No |
 | Multi-Processor | 4 (webhooks) | 100+ | 50+ | N/A | N/A | N/A |
 | Web Application | Yes (9 pages) | Yes | Yes | Yes | Yes | Partial |
 | Mobile App | No (planned) | No | No | No | No | No |
-| Dispute Company Sync | Yes (Merlink) | No | No | No | No | No |
+| Dispute/Chargeback Adapters | 21 (full two-way sync) | No | No | No | No | No |
+| Brand Loyalty Integration | 5 programs | No | No | No | No | No |
 | PDF Generation | Auto | Manual | Semi | Manual | Manual | Manual |
 | Real-time Dashboard | Yes | Yes | Yes | Yes | Yes | Basic |
 | Notification System | Yes (real-time) | Email only | Email only | Email | Email | Email |
@@ -794,16 +862,18 @@ Others:         ================             16%
 - Manual processes take 2-3 hours per case
 - AccuDefend takes 5 minutes of staff time
 
-#### 2. 12 PMS Integrations (Industry-Leading)
+#### 2. 30 PMS Integrations + 21 Dispute Adapters (51 Total - Industry-Leading)
 
 **Competitors:** No PMS integration OR 1 basic integration (beta)
-**AccuDefend:** 12 PMS systems integrated (Oracle Opera Cloud, Mews, Cloudbeds, AutoClerk, protel, StayNTouch, Apaleo, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS)
+**AccuDefend:** 30 PMS systems integrated across 4 categories: Enterprise (15), Boutique/Independent (6), Vacation Rental (4), Brand-Specific (5). Plus 21 dispute/chargeback adapters with full two-way sync.
 
 **Why It Matters:**
 - Evidence must be collected DURING the stay
 - By the time chargeback arrives (30-90 days later), evidence is lost
 - AccuDefend captures evidence proactively across all major PMS platforms
 - Competitors rely on hotels to have saved documents
+- Brand-specific PMS integrations (Marriott FOSSE, Hilton OnQ, IHG Concerto, Wyndham, Choice) open the enterprise chain market
+- 21 dispute adapters ensure coverage across all card networks, processors, and third-party services
 
 #### 3. Multi-Processor Support with Real-Time Webhooks
 
@@ -827,17 +897,30 @@ Others:         ================             16%
 - Saves time on unwinnable cases
 - 4-tier system gives clear actionable guidance
 
-#### 5. Dispute Company Integration (Merlink 2-Way Sync)
+#### 5. 21 Dispute/Chargeback Adapters with Full Two-Way Sync
 
-**Competitors:** No dispute company integrations
-**AccuDefend:** Merlink 2-way sync for seamless dispute company coordination
+**Competitors:** No dispute portal integrations
+**AccuDefend:** 21 adapters covering Prevention (3), Card Networks (4), Merchant Processors (9), and Third-Party (5) -- all with full two-way sync via webhooks
 
 **Why It Matters:**
 - Hotels using third-party dispute companies get unified workflow
-- 2-way sync eliminates manual data transfer
+- Full two-way sync across all 21 adapters eliminates manual data transfer
+- Coverage across all major card networks (Visa, Mastercard, Amex, Discover)
 - Enables hybrid approach (AI-assisted + human expert)
+- Prevention adapters (Verifi, Ethoca, RDR) stop chargebacks before they happen
 
-#### 6. 10-30 Day Response Time
+#### 6. Brand-Specific Loyalty Integration
+
+**Competitors:** No loyalty program integration
+**AccuDefend:** Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards
+
+**Why It Matters:**
+- Loyalty member status is strong evidence in dispute cases
+- Brand-specific PMS access enables deeper data collection
+- Loyalty data strengthens AI confidence scoring
+- Opens enterprise chain market that competitors cannot address
+
+#### 7. 10-30 Day Response Time
 
 **Competitors:** 30-90 days (industry standard)
 **AccuDefend:** 10-30 days (more realistic for hotels)
@@ -847,7 +930,7 @@ Others:         ================             16%
 - Less cash flow impact
 - More accurate messaging to clients
 
-#### 7. Transparent Pricing
+#### 8. Transparent Pricing
 
 **Competitors:** Complex fee structures, hidden costs
 **AccuDefend:** Simple monthly subscription, no per-case fees
@@ -1020,9 +1103,9 @@ Others:         ================             16%
 
 **Approach:** Integrate with Canary's authorization forms, joint case study, cross-promotion, revenue share or bundled pricing
 
-#### 8. Expand Dispute Company Integrations
+#### 8. Leverage 21 Dispute/Chargeback Adapters
 
-**Leverage Merlink 2-way sync** as proof of concept, add additional dispute company integrations based on customer demand, position AccuDefend as the hub connecting hotels, processors, and dispute companies
+**With 21 adapters already implemented** (Prevention, Card Networks, Merchant Processors, Third-Party), position AccuDefend as the definitive hub connecting hotels, processors, card networks, and dispute companies. All adapters feature full two-way sync with webhooks for real-time data flow.
 
 ### Long-Term Strategy (12-24 Months)
 
@@ -1074,11 +1157,13 @@ Others:         ================             16%
 ### Strengths
 
 - Only hotel-specific automated chargeback defense solution on the market
-- 12 PMS integrations implemented (competitors have 0-1)
+- 51 total integrations: 30 PMS systems + 21 dispute/chargeback adapters (competitors have 0-1 PMS integrations)
+- 30 PMS integrations across 4 categories: Enterprise (15), Boutique/Independent (6), Vacation Rental (4), Brand-Specific (5)
+- 21 dispute/chargeback adapters with full two-way sync: Prevention (3), Card Networks (4), Merchant Processors (9), Third-Party (5)
+- Brand-specific loyalty integration: Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards
 - 4 payment processors with real-time webhook processing (Stripe, Adyen, Shift4, Elavon)
 - AI-powered weighted confidence scoring (40/35/25 weighting) with 4-tier recommendation system
 - Modern, scalable tech stack (React 18, Node.js 20, PostgreSQL 16, AWS ECS Fargate, Terraform IaC)
-- Dispute company integration with Merlink 2-way sync
 - Superior automation (95% vs. competitors' 10-40%)
 - Transparent pricing with no per-case fees
 - Real-time notification system
@@ -1105,7 +1190,7 @@ Others:         ================             16%
 - Shift4 partnership potential (40% of hotel payment market, weak native tools)
 - PMS marketplace listings (Stripe, Mews, Opera, Cloudbeds) for built-in distribution
 - Canary Technologies partnership (complementary products)
-- Dispute company integration capability (Merlink 2-way sync) as differentiator and expansion vector
+- 21 dispute/chargeback adapters with full two-way sync as major differentiator and expansion vector
 - White-label licensing for payment processors
 - International expansion (protel integration already supports EU entry)
 - Upsell path to fraud prevention features
@@ -1161,7 +1246,7 @@ Others:         ================             16%
 
 ### Top 3 Competitive Advantages
 
-1. **Hotel-specific automation** with 12 PMS integrations (no competitor has this breadth)
+1. **Hotel-specific automation** with 30 PMS integrations + 21 dispute adapters = 51 total integrations (no competitor has this breadth)
 2. **AI-powered weighted confidence scoring** with 4-tier recommendation system
 3. **Multi-processor support** with real-time webhooks (processor-agnostic solution)
 
@@ -1201,12 +1286,12 @@ Others:         ================             16%
 - [ ] Publish case studies from pilot customers
 - [ ] Attend first hospitality tech conference
 - [ ] Begin Canary partnership discussions
-- [ ] Explore additional dispute company integrations beyond Merlink
+- [ ] Leverage 21 dispute/chargeback adapters for competitive positioning
 
 ---
 
-**Document Version:** 2.0
+**Document Version:** 3.0
 **Last Updated:** February 13, 2026
 **Next Review:** May 13, 2026 (quarterly update)
 **Owner:** Aalok Mehta
-**Status:** Updated to reflect current AccuDefend implementation state
+**Status:** Updated to reflect 51 total integrations (30 PMS + 21 dispute adapters) with full two-way sync

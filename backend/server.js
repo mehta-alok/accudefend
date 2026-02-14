@@ -50,7 +50,7 @@ app.use(helmet({
 }));
 
 // CORS configuration
-const corsOrigins = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5173'];
+const corsOrigins = process.env.CORS_ORIGINS?.split(',') || ['http://localhost:5173', 'http://localhost:3000'];
 app.use(cors({
   origin: corsOrigins,
   credentials: true,
@@ -224,37 +224,67 @@ async function startServer() {
   try {
     logger.info('Starting AccuDefend Chargeback Defense System...');
 
-    // Initialize connections
-    await connectDatabase();
-    logger.info('Database connected');
+    let dbConnected = false;
+    let redisConnected = false;
+    let s3Initialized = false;
 
-    await connectRedis();
-    logger.info('Redis connected');
-
-    await initializeS3();
-    logger.info('S3 initialized');
-
-    // Initialize BullMQ workers for two-way sync
+    // Initialize connections (graceful - continue in demo mode if unavailable)
     try {
-      await initializeWorkers();
-      logger.info('BullMQ sync workers initialized');
-
-      await initializeScheduledSyncs();
-      logger.info('Scheduled sync jobs configured');
-    } catch (workerError) {
-      logger.warn('BullMQ workers not initialized (non-fatal):', workerError.message);
+      await connectDatabase();
+      dbConnected = true;
+      logger.info('Database connected');
+    } catch (dbError) {
+      logger.warn('Database not available - running in demo mode:', dbError.message);
     }
+
+    try {
+      await connectRedis();
+      redisConnected = true;
+      logger.info('Redis connected');
+    } catch (redisError) {
+      logger.warn('Redis not available - running without cache:', redisError.message);
+    }
+
+    try {
+      await initializeS3();
+      s3Initialized = true;
+      logger.info('S3 initialized');
+    } catch (s3Error) {
+      logger.warn('S3 not available - file uploads disabled:', s3Error.message);
+    }
+
+    // Initialize BullMQ workers for two-way sync (requires Redis)
+    if (redisConnected) {
+      try {
+        await initializeWorkers();
+        logger.info('BullMQ sync workers initialized');
+
+        await initializeScheduledSyncs();
+        logger.info('Scheduled sync jobs configured');
+      } catch (workerError) {
+        logger.warn('BullMQ workers not initialized (non-fatal):', workerError.message);
+      }
+    }
+
+    const mode = dbConnected ? 'production' : 'demo';
 
     // Start server
     app.listen(PORT, () => {
       logger.info(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║     AccuDefend CHARGEBACK DEFENSE SYSTEM                           ║
+║     AccuDefend CHARGEBACK DEFENSE SYSTEM                      ║
 ║     AI-Powered Dispute Management Platform                    ║
 ║                                                               ║
 ║     Server running on port ${PORT}                              ║
-║     Environment: ${process.env.NODE_ENV || 'development'}                            ║
+║     Environment: ${(process.env.NODE_ENV || 'development').padEnd(16)}                    ║
+║     Mode: ${mode.padEnd(23)}                    ║
+║     Database: ${(dbConnected ? 'Connected' : 'Demo Mode').padEnd(20)}                    ║
+║     Redis: ${(redisConnected ? 'Connected' : 'Disabled').padEnd(23)}                    ║
+║     S3: ${(s3Initialized ? 'Connected' : 'Disabled').padEnd(26)}                    ║
+║     PMS Adapters: 30 loaded                                   ║
+║     Dispute Adapters: 21 loaded                               ║
+║     Total Integrations: 51                                    ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
       `);

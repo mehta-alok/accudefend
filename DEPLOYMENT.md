@@ -3,36 +3,41 @@
 ## Table of Contents
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
-3. [Local Development](#local-development)
-4. [Development Server (AWS)](#development-server-aws)
-5. [Staging Environment](#staging-environment)
-6. [Production Deployment](#production-deployment)
-7. [CI/CD Pipeline](#cicd-pipeline)
-8. [Monitoring & Logging](#monitoring--logging)
-9. [Troubleshooting](#troubleshooting)
+3. [Demo Mode (No Dependencies)](#demo-mode-no-dependencies)
+4. [Local Development](#local-development)
+5. [Development Server (AWS)](#development-server-aws)
+6. [Staging Environment](#staging-environment)
+7. [Production Deployment](#production-deployment)
+8. [CI/CD Pipeline](#cicd-pipeline)
+9. [Monitoring & Logging](#monitoring--logging)
+10. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Overview
 
-AccuDefend supports multiple deployment environments:
+AccuDefend supports multiple deployment environments with **51 two-way integrations** (30 PMS systems + 21 dispute & chargeback portal adapters):
 
-| Environment | Purpose | URL |
-|-------------|---------|-----|
-| **Local** | Developer machines | http://localhost:3000 |
-| **Development** | Dev server for testing | https://dev.accudefend.com |
-| **Staging** | QA and UAT testing | https://staging.accudefend.com |
-| **Production** | Live production system | https://app.accudefend.com |
+| Environment | Purpose | URL | Dependencies |
+|-------------|---------|-----|--------------|
+| **Demo** | Quick evaluation, no DB needed | http://localhost:3000 | Node.js only |
+| **Local** | Developer machines | http://localhost:3000 | Docker (PostgreSQL + Redis) |
+| **Development** | Dev server for testing | https://dev.accudefend.com | AWS |
+| **Staging** | QA and UAT testing | https://staging.accudefend.com | AWS |
+| **Production** | Live production system | https://app.accudefend.com | AWS (Multi-AZ) |
 
 ---
 
 ## Prerequisites
 
 ### Required Tools
+
+For **Demo Mode**, only Node.js and Git are needed. Full deployment requires all tools below.
+
 - Node.js 20+ and npm 10+
-- Docker and Docker Compose v2
-- AWS CLI v2 (configured)
-- PostgreSQL 16 client
+- Docker and Docker Compose v2 (local development and above)
+- AWS CLI v2 (configured) (cloud deployments)
+- PostgreSQL 16 client (local development and above)
 - Terraform 1.x (for infrastructure provisioning)
 - Git
 
@@ -45,6 +50,59 @@ AccuDefend supports multiple deployment environments:
 - S3 bucket for evidence storage
 - CloudFront distribution (optional)
 - Route 53 hosted zone
+
+---
+
+## Demo Mode (No Dependencies)
+
+The fastest way to explore AccuDefend. The server starts **without PostgreSQL or Redis** by automatically detecting missing connections and falling back to in-memory mock data.
+
+### Quick Start
+
+```bash
+# Backend - starts on port 8000
+cd backend
+npm install
+npm run dev
+
+# Frontend (new terminal) - starts on port 3000
+cd frontend
+npm install
+npm run dev
+```
+
+### Demo Credentials
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@accudefend.com | AccuAdmin123! | Admin |
+
+### Access Points
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Health Check**: http://localhost:8000/health
+
+### What Works in Demo Mode
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Dashboard & Metrics | ✅ | Mock data with realistic values |
+| Case Management | ✅ | Pre-loaded chargeback cases |
+| AI Confidence Scoring | ✅ | Simulated analysis |
+| PMS Integration Pages | ✅ | All 30 PMS systems visible (read-only) |
+| Dispute Adapter Views | ✅ | All 21 adapters visible (read-only) |
+| Analytics & Reports | ✅ | Mock trend data |
+| Evidence Upload | ❌ | Requires S3 configuration |
+| Real-time Webhooks | ❌ | Requires external processor accounts |
+| Data Persistence | ❌ | Data resets on server restart |
+
+### When to Use Demo Mode
+
+- **First-time evaluation** of the platform
+- **Frontend development** without backend infrastructure
+- **Sales demos** and stakeholder presentations
+- **CI testing** of UI components
 
 ---
 

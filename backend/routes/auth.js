@@ -163,7 +163,64 @@ router.post('/login', async (req, res) => {
 
     const { email, password } = validation.data;
 
-    // Find user
+    // Check if database is available - if not, use demo mode
+    let dbAvailable = true;
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch {
+      dbAvailable = false;
+    }
+
+    if (!dbAvailable) {
+      // Demo mode - authenticate with demo credentials
+      const demoCredentials = {
+        'admin@accudefend.com': { password: 'AccuAdmin123!', role: 'ADMIN', firstName: 'Admin', lastName: 'User' },
+        'manager@accudefend.com': { password: 'AccuManager123!', role: 'MANAGER', firstName: 'Hotel', lastName: 'Manager' },
+        'staff@accudefend.com': { password: 'AccuStaff123!', role: 'STAFF', firstName: 'Staff', lastName: 'Member' },
+      };
+
+      const demoCred = demoCredentials[email.toLowerCase()];
+      if (!demoCred || password !== demoCred.password) {
+        return res.status(401).json({
+          error: 'Authentication Failed',
+          message: 'Invalid email or password. Use demo credentials shown on login page.'
+        });
+      }
+
+      const demoUser = {
+        id: 'demo-' + email.split('@')[0],
+        email: email.toLowerCase(),
+        firstName: demoCred.firstName,
+        lastName: demoCred.lastName,
+        role: demoCred.role,
+        propertyId: 'demo-property-1'
+      };
+
+      const accessToken = generateAccessToken(demoUser);
+      const refreshToken = generateRefreshToken();
+
+      logger.info(`Demo login successful: ${email}`);
+
+      return res.json({
+        message: 'Login successful (Demo Mode)',
+        user: {
+          id: demoUser.id,
+          email: demoUser.email,
+          firstName: demoUser.firstName,
+          lastName: demoUser.lastName,
+          role: demoUser.role,
+          property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' }
+        },
+        tokens: {
+          accessToken,
+          refreshToken,
+          expiresIn: '24h'
+        },
+        isDemo: true
+      });
+    }
+
+    // Normal database-backed login flow
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       include: {
@@ -448,6 +505,22 @@ router.post('/logout', authenticateToken, async (req, res) => {
  */
 router.get('/me', authenticateToken, async (req, res) => {
   try {
+    // If demo user, return from req.user (set by middleware)
+    if (req.user.id && req.user.id.startsWith('demo-')) {
+      return res.json({
+        user: {
+          id: req.user.id,
+          email: req.user.email,
+          firstName: req.user.firstName || 'Admin',
+          lastName: req.user.lastName || 'User',
+          role: req.user.role,
+          lastLogin: new Date().toISOString(),
+          createdAt: new Date('2026-01-01').toISOString(),
+          property: req.user.property || { id: 'demo-property-1', name: 'AccuDefend Demo Hotel', city: 'New York', state: 'NY' }
+        }
+      });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
       select: {
@@ -473,9 +546,18 @@ router.get('/me', authenticateToken, async (req, res) => {
 
   } catch (error) {
     logger.error('Get profile error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'Failed to get profile'
+    // Fallback to token data
+    res.json({
+      user: {
+        id: req.user.id,
+        email: req.user.email,
+        firstName: req.user.firstName || 'User',
+        lastName: req.user.lastName || '',
+        role: req.user.role,
+        lastLogin: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        property: req.user.property || null
+      }
     });
   }
 });

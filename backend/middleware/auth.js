@@ -23,37 +23,73 @@ async function authenticateToken(req, res, next) {
       });
     }
 
-    // Check if token is blacklisted
-    const isBlacklisted = await tokenBlacklist.isBlacklisted(token);
-    if (isBlacklisted) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        message: 'Token has been revoked'
-      });
+    // Check if token is blacklisted (skip if Redis unavailable)
+    try {
+      const isBlacklisted = await tokenBlacklist.isBlacklisted(token);
+      if (isBlacklisted) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Token has been revoked'
+        });
+      }
+    } catch {
+      // Redis unavailable - skip blacklist check
     }
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Get user from database
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
+    // Check if this is a demo user (userId starts with 'demo-')
+    if (decoded.userId && decoded.userId.startsWith('demo-')) {
+      req.user = {
+        id: decoded.userId,
+        email: decoded.email,
+        firstName: decoded.email.split('@')[0].split('.')[0].replace(/\b\w/g, l => l.toUpperCase()),
+        lastName: 'User',
+        role: decoded.role || 'ADMIN',
         isActive: true,
-        propertyId: true,
-        property: {
-          select: {
-            id: true,
-            name: true
+        propertyId: decoded.propertyId || 'demo-property-1',
+        property: { id: 'demo-property-1', name: 'AccuDefend Demo Hotel' }
+      };
+      req.token = token;
+      return next();
+    }
+
+    // Get user from database
+    let user;
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          role: true,
+          isActive: true,
+          propertyId: true,
+          property: {
+            select: {
+              id: true,
+              name: true
+            }
           }
         }
-      }
-    });
+      });
+    } catch (dbError) {
+      // Database unavailable - construct user from token
+      logger.warn('Database unavailable in auth middleware, using token data');
+      req.user = {
+        id: decoded.userId,
+        email: decoded.email,
+        role: decoded.role,
+        isActive: true,
+        propertyId: decoded.propertyId,
+        property: null
+      };
+      req.token = token;
+      return next();
+    }
 
     if (!user || !user.isActive) {
       return res.status(401).json({

@@ -175,7 +175,7 @@ frontend/
       CaseDetail.jsx            # Individual case view with evidence
       Analytics.jsx             # Charts, trends, reporting
       Settings.jsx              # User and system settings
-      PMSIntegration.jsx        # PMS system connections (12+ systems)
+      PMSIntegration.jsx        # PMS system connections (30 systems)
       DisputeIntegration.jsx    # Dispute company integrations (Merlink)
       Tutorial.jsx              # Help/tutorial page
     components/
@@ -205,7 +205,7 @@ frontend/
 | CaseDetail | `/cases/:id` | Full case view: evidence, timeline, AI analysis, notes |
 | Analytics | `/analytics` | Win rate trends, reason code breakdown, property stats |
 | Settings | `/settings` | User profile, system config, provider management |
-| PMSIntegration | `/pms` | Connect/sync 12+ PMS systems |
+| PMSIntegration | `/pms` | Connect/sync 30 PMS systems (Enterprise, Boutique, Vacation Rental, Brand-Specific) |
 | DisputeIntegration | `/disputes` | Dispute company management with Merlink 2-way sync |
 | Tutorial | `/tutorial` | Interactive help system |
 
@@ -262,7 +262,7 @@ backend/
     aiAgents.js                 # AI agent orchestration system
     backlog.js                  # Technical backlog management service
     integrations.js             # Third-party integration service
-    pmsIntegration.js           # PMS system connection definitions (12+ systems)
+    pmsIntegration.js           # PMS system connection definitions (30 systems in 4 categories)
     pmsSyncService.js           # PMS data synchronization logic
     disputeCompanies.js         # Dispute company integrations (Merlink 2-way sync)
   controllers/
@@ -302,7 +302,7 @@ backend/
 | aiAgents | Orchestration of 8 AI agent types (backlog manager, code reviewer, security scanner, dispute analyzer, evidence processor, etc.) |
 | backlog | Technical backlog management with epics, sprints, items, dependencies |
 | integrations | Third-party service connection management (Stripe, Adyen, Slack, etc.) |
-| pmsIntegration | PMS system definitions, connection configs, and evidence type mappings for 12+ hotel PMS systems |
+| pmsIntegration | PMS system definitions, connection configs, and evidence type mappings for 30 hotel PMS systems across 4 categories (Enterprise, Boutique/Independent, Vacation Rental, Brand-Specific with loyalty programs) |
 | pmsSyncService | Real-time and scheduled data synchronization with connected PMS systems |
 | disputeCompanies | Dispute company integrations including Merlink 2-way sync for automated dispute filing |
 
@@ -1809,22 +1809,57 @@ class StripeAdapter extends ProcessorAdapter {
 
 ### PMS Integration Architecture
 
-AccuDefend integrates with 12+ Property Management Systems:
+AccuDefend integrates with 30 Property Management Systems organized in 4 categories, all implementing full two-way sync:
+
+**Enterprise PMS (15 systems):**
 
 | PMS System | Auth Type | Key Evidence Types |
 |-----------|-----------|-------------------|
 | Oracle Opera Cloud | OAuth2 | Folio, registration card, payment receipt, guest signature, ID scan |
 | Mews Systems | API Key | Bill, registration, payment, customer profile |
-| AutoClerk PMS | API Key | Folio, registration card, payment receipt, guest signature, ID scan, audit trail |
 | Cloudbeds | OAuth2 | Reservation, guest info, payment info, invoice |
 | protel PMS | Basic Auth | Booking confirmation, invoice, guest registration, payment log |
 | StayNTouch | OAuth2 | Folio, reservation, payment record, guest signature |
 | Apaleo | OAuth2 | Reservation, folio, invoice, payment |
+| Maestro PMS | OAuth2 | Folio, registration, payment, guest profile |
+| SynXis Property Hub | OAuth2 | Reservation, folio, payment, guest data |
+| OPERA Cloud (Simphony) | OAuth2 | POS charges, folio, payment receipt |
+| Infor HMS | API Key | Folio, registration, payment, guest history |
+| Galaxy Lightspeed | API Key | Reservation, folio, payment, guest card |
+| Visual Matrix | Basic Auth | Folio, registration card, payment receipt |
+| ResNexus | API Key | Booking, payment receipt, guest info |
+| Hotelogix | API Key | Folio, reservation, payment, guest profile |
+| eZee Absolute | API Key | Reservation, folio, invoice, payment log |
+
+**Boutique/Independent PMS (6 systems):**
+
+| PMS System | Auth Type | Key Evidence Types |
+|-----------|-----------|-------------------|
+| AutoClerk PMS | API Key | Folio, registration card, payment receipt, guest signature, ID scan, audit trail |
 | innRoad | OAuth2 | Reservation, folio, payment receipt, guest info |
 | WebRezPro | API Key | Booking, folio, payment receipt, registration |
 | RoomMaster | Basic Auth | Folio, registration card, payment receipt, reservation |
 | Little Hotelier | API Key | Booking, payment receipt, guest info |
 | RoomKeyPMS | API Key | Reservation, guest card, billing statement |
+
+**Vacation Rental PMS (4 systems):**
+
+| PMS System | Auth Type | Key Evidence Types |
+|-----------|-----------|-------------------|
+| Guesty | OAuth2 | Reservation, payment, guest ID, rental agreement |
+| Hostaway | API Key | Booking, payment receipt, guest info, damage deposit |
+| Lodgify | API Key | Reservation, invoice, guest data, rental contract |
+| Escapia | OAuth2 | Booking, folio, payment, guest agreement |
+
+**Brand-Specific PMS (5 systems with loyalty program integration):**
+
+| PMS System | Auth Type | Loyalty Program | Key Evidence Types |
+|-----------|-----------|-----------------|-------------------|
+| Marriott FOSSE/MARSHA | OAuth2 | Marriott Bonvoy | Folio, registration, loyalty status, payment |
+| Hilton OnQ | OAuth2 | Hilton Honors | Folio, guest profile, loyalty tier, payment |
+| Hyatt OPERA (Custom) | OAuth2 | World of Hyatt | Reservation, folio, loyalty data, payment |
+| IHG Concerto | OAuth2 | IHG One Rewards | Folio, registration, rewards status, payment |
+| Best Western Central | API Key | Best Western Rewards | Booking, folio, loyalty info, payment |
 
 **PMS Integration Flow:**
 
@@ -1895,13 +1930,54 @@ const normalizedEvent = {
 };
 ```
 
-### Dispute Company Integration
+### Dispute & Chargeback Portal Integration
 
-AccuDefend integrates with dispute management companies through the `services/disputeCompanies.js` service and `/api/disputes` route module.
+AccuDefend integrates with 21 dispute/chargeback portals through dedicated adapters, all implementing full two-way sync via the `services/disputeCompanies.js` service and `/api/disputes` route module.
 
-**Merlink 2-Way Sync:**
-- Outbound: AccuDefend pushes case data, evidence packets, and submission status to Merlink
-- Inbound: Merlink pushes dispute outcomes, processor responses, and status updates back
+**Prevention Services (3 adapters):**
+
+| Portal | Capabilities |
+|--------|-------------|
+| Verifi (Visa) | CDRN alerts, real-time prevention, resolution |
+| Ethoca (Mastercard) | Alert-based prevention, consumer clarity |
+| RDR (Rapid Dispute Resolution) | Automated resolution, pre-dispute deflection |
+
+**Card Network Portals (4 adapters):**
+
+| Portal | Capabilities |
+|--------|-------------|
+| Visa Resolve Online (VROL) | Dispute management, evidence submission, status tracking |
+| Mastercard Connect | Chargeback filing, pre-arbitration, retrieval requests |
+| Amex Dispute Center | Inquiry response, chargeback defense, evidence upload |
+| Discover eDisputes | Dispute response, evidence submission, case tracking |
+
+**Merchant Processor Portals (9 adapters):**
+
+| Portal | Capabilities |
+|--------|-------------|
+| Stripe Disputes Dashboard | Webhook disputes, evidence submission, auto-sync |
+| Adyen Dispute Management | Chargeback notifications, defense filing |
+| Shift4 Disputes | Dispute events, evidence upload, status tracking |
+| Elavon Chargeback Manager | Chargeback notifications, representment |
+| Chase Paymentech Disputes | Dispute management, evidence submission |
+| Worldpay Dispute Resolution | Chargeback defense, evidence filing |
+| Global Payments Disputes | Dispute tracking, evidence upload |
+| TSYS Dispute Manager | Chargeback management, representment filing |
+| First Data Disputes | Dispute response, evidence submission |
+
+**Third-Party Dispute Services (5 adapters):**
+
+| Portal | Capabilities |
+|--------|-------------|
+| Merlink | Full 2-way sync, case management, evidence packets |
+| Chargebacks911 | Dispute management, prevention, analytics |
+| SERTIFI | Authorization capture, digital signatures, evidence |
+| Midigator | Dispute intelligence, prevention alerts, analytics |
+| DisputeHelp | Case management, evidence compilation, submission |
+
+**Two-Way Sync Pattern (all 21 adapters):**
+- Outbound: AccuDefend pushes case data, evidence packets, and submission status
+- Inbound: Portals push dispute outcomes, processor responses, and status updates back
 - Real-time sync via webhooks with fallback to scheduled polling
 - Configuration managed through the DisputeIntegration page in the web dashboard
 
@@ -2397,8 +2473,15 @@ production:
    - Supporting document management with local + S3 storage
 
 7. **PMS Integrations Expanded:**
-   - Expanded from 3 systems (Opera, Mews, Cloudbeds) to 12+ systems
-   - Added: AutoClerk, protel, StayNTouch, Apaleo, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS
+   - Expanded from 3 systems (Opera, Mews, Cloudbeds) to 30 PMS systems in 4 categories
+   - Enterprise (15): Oracle Opera Cloud, Mews, Cloudbeds, protel, StayNTouch, Apaleo, Maestro, SynXis, OPERA Cloud Simphony, Infor HMS, Galaxy Lightspeed, Visual Matrix, ResNexus, Hotelogix, eZee Absolute
+   - Boutique/Independent (6): AutoClerk, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS
+   - Vacation Rental (4): Guesty, Hostaway, Lodgify, Escapia
+   - Brand-Specific (5): Marriott FOSSE/MARSHA, Hilton OnQ, Hyatt OPERA, IHG Concerto, Best Western Central (with loyalty program integration)
+   - Added 21 dispute/chargeback portal adapters: Prevention (3), Card Networks (4), Merchant Processors (9), Third-Party (5)
+   - All 51 adapters implement full two-way sync
+   - Brand-specific PMS adapters include loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards)
+   - Demo mode support: server starts gracefully without DB/Redis
 
 8. **Infrastructure Updates:**
    - Documented Terraform IaC in infrastructure/aws/ (main.tf + variables.tf)

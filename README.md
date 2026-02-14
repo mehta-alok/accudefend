@@ -20,12 +20,12 @@
 ### Key Features
 
 - **AI-Powered Analysis** - Automated confidence scoring and dispute recommendations
-- **Multi-Processor Integration** - Stripe, Adyen, Shift4, Elavon webhooks
+- **51 Two-Way Integrations** - 30 PMS systems and 21 dispute & chargeback portal adapters
 - **Evidence Management** - AWS S3 storage with secure presigned URLs
 - **Real-Time Dashboard** - Live metrics, trends, and case management
 - **Role-Based Access** - Property-level data isolation with RBAC
 - **Audit Trail** - Complete compliance logging for all actions
-- **Dispute Company Integration** - Merlink 2-way sync and dispute company management
+- **Dispute & Chargeback Integration** - 21 adapters across card networks, processors, and third-party services
 - **Notifications System** - Real-time notification panel with alerts
 - **Technical Backlog** - Built-in backlog management with sprints and epics
 - **AI Agents** - Autonomous agents for backlog management, code review, and security scanning
@@ -52,11 +52,10 @@
 │                      │   Sessions   │                           │
 │                      └──────────────┘                           │
 │                                                                  │
-│  External Integrations:                                         │
-│  ├── Payment Processors (Stripe, Adyen, Shift4, Elavon)        │
-│  ├── Dispute Companies (Merlink 2-way sync)                     │
+│  External Integrations (51 total):                              │
+│  ├── PMS Systems (30 two-way integrations)                      │
+│  ├── Dispute & Chargeback Adapters (21 portals)                 │
 │  ├── AWS S3 (Evidence Storage)                                  │
-│  ├── PMS (Mews, Oracle Opera Cloud, Cloudbeds, 12+ systems)    │
 │  └── AI Services (OpenAI, Anthropic APIs)                       │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -110,6 +109,47 @@ docker-compose up -d
 # Run migrations
 docker-compose exec api npx prisma migrate deploy
 ```
+
+---
+
+## Demo Mode
+
+AccuDefend can run in **demo mode** without PostgreSQL or Redis. The server automatically detects missing database/cache connections and falls back to in-memory mock data.
+
+### Quick Start (No Dependencies)
+
+```bash
+# Backend only - starts on port 8000
+cd backend
+npm install
+npm run dev
+
+# Frontend (new terminal) - starts on port 3000
+cd frontend
+npm install
+npm run dev
+```
+
+### Demo Login Credentials
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@accudefend.com | AccuAdmin123! | Admin |
+
+### What Works in Demo Mode
+
+- Full UI with dashboard, cases, analytics
+- Mock chargeback cases with realistic data
+- AI confidence scoring (simulated)
+- PMS integration pages (read-only)
+- Dispute adapter status views
+- All 51 integration configurations visible
+
+### Access Points
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Health Check**: http://localhost:8000/health
 
 ---
 
@@ -298,9 +338,9 @@ accudefend/
 │   │   ├── aiAgents.js        # AI agent orchestration
 │   │   ├── backlog.js         # Backlog management
 │   │   ├── integrations.js    # Third-party integrations
-│   │   ├── pmsIntegration.js  # PMS connection handler
-│   │   ├── pmsSyncService.js  # PMS data synchronization
-│   │   └── disputeCompanies.js # Dispute company integrations
+│   │   ├── pmsIntegration.js  # 30 PMS system adapters & connection handler
+│   │   ├── pmsSyncService.js  # Two-way PMS data synchronization
+│   │   └── disputeCompanies.js # 21 dispute & chargeback portal adapters
 │   ├── data/                  # Development data
 │   │   └── mockData.js        # Mock data for dev testing
 │   ├── utils/                 # Helpers (logger, validators)
@@ -415,24 +455,59 @@ AccuDefend uses intelligent AI-powered defense strategies:
 
 ---
 
-## PMS Integration
+## PMS Integration (30 Systems)
 
-AccuDefend integrates with 12+ Property Management Systems:
+AccuDefend integrates with **30 Property Management Systems** across 4 categories, all with full two-way sync (inbound: reservations, guest data; outbound: notes, flags, alerts).
+
+### Enterprise PMS (15 systems)
 
 | PMS | Auth Type | Two-Way Sync |
 |-----|-----------|--------------|
 | Oracle Opera Cloud | OAuth 2.0 | ✅ |
-| Mews Systems | API Key | ✅ |
-| AutoClerk | API Key | ✅ |
+| Mews | API Key | ✅ |
 | Cloudbeds | OAuth 2.0 | ✅ |
-| protel PMS | Basic Auth | ✅ |
-| StayNTouch | OAuth 2.0 | ✅ |
-| Apaleo | OAuth 2.0 | ✅ |
+| AutoClerk | API Key | ✅ |
+| Agilysys | OAuth 2.0 | ✅ |
+| Infor | OAuth 2.0 | ✅ |
+| Stayntouch | OAuth 2.0 | ✅ |
+| RoomKey | API Key | ✅ |
+| Maestro | API Key | ✅ |
+| Hotelogix | API Key | ✅ |
+| RMS Cloud | OAuth 2.0 | ✅ |
+| Protel | Basic Auth | ✅ |
+| eZee | API Key | ✅ |
+| SIHOT | API Key | ✅ |
 | innRoad | OAuth 2.0 | ✅ |
-| WebRezPro | API Key | ❌ |
-| RoomMaster | Basic Auth | ❌ |
-| Little Hotelier | API Key | ❌ |
-| RoomKeyPMS | API Key | ✅ |
+
+### Boutique & Independent PMS (6 systems)
+
+| PMS | Auth Type | Two-Way Sync |
+|-----|-----------|--------------|
+| Little Hotelier | API Key | ✅ |
+| Frontdesk Anywhere | API Key | ✅ |
+| WebRezPro | API Key | ✅ |
+| ThinkReservations | API Key | ✅ |
+| ResNexus | API Key | ✅ |
+| Guestline | OAuth 2.0 | ✅ |
+
+### Vacation Rental PMS (4 systems)
+
+| PMS | Auth Type | Two-Way Sync |
+|-----|-----------|--------------|
+| Guesty | OAuth 2.0 | ✅ |
+| Hostaway | API Key | ✅ |
+| Lodgify | API Key | ✅ |
+| Escapia | OAuth 2.0 | ✅ |
+
+### Brand-Specific PMS (5 systems, with loyalty program sync)
+
+| PMS | Brand | Loyalty Program | Two-Way Sync |
+|-----|-------|-----------------|--------------|
+| Marriott GXP | Marriott | Marriott Bonvoy | ✅ |
+| Hilton OnQ | Hilton | Hilton Honors | ✅ |
+| Hyatt Opera | Hyatt | World of Hyatt | ✅ |
+| IHG Concerto | IHG | IHG One Rewards | ✅ |
+| Best Western | Best Western | Best Western Rewards | ✅ |
 
 ### Evidence Types from PMS
 
@@ -442,6 +517,53 @@ AccuDefend integrates with 12+ Property Management Systems:
 - Digital Signature
 - ID Document Scan
 - Booking Confirmation
+
+---
+
+## Dispute & Chargeback Integration (21 Adapters)
+
+AccuDefend connects to **21 dispute and chargeback portal adapters** across 4 categories, all with full two-way sync (inbound: dispute alerts, case updates; outbound: evidence submissions, outcomes).
+
+### Hospitality Prevention Networks (3 adapters)
+
+| Adapter | Type | Two-Way Sync |
+|---------|------|--------------|
+| Verifi (Visa CDRN/RDR) | Prevention Alert | ✅ |
+| Ethoca (Mastercard) | Prevention Alert | ✅ |
+| Merlink | Dispute Management | ✅ |
+
+### Card Network Dispute Portals (4 adapters)
+
+| Adapter | Network | Two-Way Sync |
+|---------|---------|--------------|
+| Visa VROL | Visa | ✅ |
+| Mastercom | Mastercard | ✅ |
+| AMEX Merchant | American Express | ✅ |
+| Discover Dispute | Discover | ✅ |
+
+### Merchant Processor Portals (9 adapters)
+
+| Adapter | Type | Two-Way Sync |
+|---------|------|--------------|
+| Elavon | Processor | ✅ |
+| Fiserv | Processor | ✅ |
+| Worldpay | Processor | ✅ |
+| Chase Merchant | Processor | ✅ |
+| Global Payments | Processor | ✅ |
+| TSYS | Processor | ✅ |
+| Square | Processor | ✅ |
+| Stripe | Processor | ✅ |
+| Authorize.net | Gateway | ✅ |
+
+### Third-Party Chargeback Services (5 adapters)
+
+| Adapter | Type | Two-Way Sync |
+|---------|------|--------------|
+| Chargebacks911 | Chargeback Management | ✅ |
+| Kount | Fraud Prevention | ✅ |
+| Midigator | Chargeback Management | ✅ |
+| Signifyd | Fraud Prevention | ✅ |
+| Riskified | Fraud Prevention | ✅ |
 
 ---
 

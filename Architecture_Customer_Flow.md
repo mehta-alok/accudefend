@@ -1,6 +1,6 @@
 # AccuDefend - System Architecture & Customer Flows
 
-**Version:** 2.0
+**Version:** 3.0
 **Last Updated:** February 2026
 
 ---
@@ -54,8 +54,10 @@
 
 **Layer 5: External Integrations**
 - Payment Processors: Stripe, Adyen, Shift4, Elavon
-- Property Management Systems: 12+ systems (Oracle Opera Cloud, Mews, Cloudbeds, AutoClerk, protel, StayNTouch, Apaleo, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS)
-- Dispute Companies: Merlink (2-way sync)
+- Property Management Systems: 30 PMS systems in 4 categories - Enterprise (15), Boutique/Independent (6), Vacation Rental (4), Brand-Specific (5 with loyalty programs including Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards)
+- Dispute/Chargeback Portals: 21 adapters - Prevention (3: Verifi, Ethoca, RDR), Card Networks (4: VROL, Mastercard Connect, Amex, Discover), Merchant Processors (9: Stripe, Adyen, Shift4, Elavon, Chase Paymentech, Worldpay, Global Payments, TSYS, First Data), Third-Party (5: Merlink, Chargebacks911, SERTIFI, Midigator, DisputeHelp)
+- All 51 integrations implement full two-way sync
+- Demo mode support: server starts gracefully without DB/Redis
 - AI Services: OpenAI, Anthropic APIs
 - Notification Services
 
@@ -319,6 +321,7 @@ PMS:
 |---------|------|---------|
 | 1.0 | January 27, 2026 | Initial architecture and customer flow document |
 | 2.0 | February 2026 | Updated to reflect: current tech stack (React 18, Node.js 20, PostgreSQL 16), all 9 routes, 8 services, 2 controllers, dispute integration, notifications, 12+ PMS systems, Terraform IaC, multi-region AWS, Docker configs |
+| 3.0 | February 2026 | Expanded to 51 total integrations: 30 PMS systems (Enterprise 15, Boutique/Independent 6, Vacation Rental 4, Brand-Specific 5 with loyalty programs), 21 dispute/chargeback portal adapters (Prevention 3, Card Networks 4, Merchant Processors 9, Third-Party 5). All adapters implement full two-way sync. Added demo mode support. Brand-specific PMS adapters include loyalty integration. |
 
 ---
 

@@ -920,67 +920,81 @@ infrastructure/
 
 ## 10. Third-Party Integrations
 
-### 10.1 Integration Architecture
+### 10.1 Integration Architecture (51 Total Integrations)
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│                              THIRD-PARTY INTEGRATIONS                                     │
+│                     THIRD-PARTY INTEGRATIONS (51 Total)                                   │
 ├─────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                          │
-│   PAYMENT PROCESSORS                    PMS SYSTEMS                                      │
-│   ──────────────────                    ───────────                                      │
-│   ┌──────────┐  ┌──────────┐           ┌──────────┐  ┌──────────┐                       │
-│   │  Stripe  │  │  Adyen   │           │   Mews   │  │  Opera   │                       │
-│   │ Disputes │  │ Disputes │           │   PMS    │  │  Cloud   │                       │
-│   └────┬─────┘  └────┬─────┘           └────┬─────┘  └────┬─────┘                       │
-│        │             │                      │             │                             │
-│   ┌────┴─────┐  ┌────┴─────┐           ┌────┴─────┐  ┌────┴─────┐                       │
-│   │  Shift4  │  │  Elavon  │           │Cloudbeds │  │   More   │                       │
-│   └────┬─────┘  └────┬─────┘           └────┬─────┘  └────┬─────┘                       │
-│        │             │                      │             │                             │
-│        └─────────────┴──────────────────────┴─────────────┘                             │
-│                                    │                                                    │
-│                                    ▼                                                    │
-│                    ┌───────────────────────────────────┐                               │
-│                    │       INTEGRATION SERVICE         │                               │
-│                    │  • Webhook handling               │                               │
-│                    │  • Credential encryption          │                               │
-│                    │  • Event logging                  │                               │
-│                    │  • Sync management                │                               │
-│                    └───────────────────────────────────┘                               │
-│                                    │                                                    │
-│        ┌───────────────────────────┼───────────────────────────┐                       │
-│        │                           │                           │                       │
-│        ▼                           ▼                           ▼                       │
-│   ┌──────────┐              ┌──────────┐              ┌──────────┐                     │
-│   │  Slack   │              │   Jira   │              │  GitHub  │                     │
-│   │  Alerts  │              │  Issues  │              │   PRs    │                     │
-│   └──────────┘              └──────────┘              └──────────┘                     │
-│                                                                                         │
-│   COMMUNICATION                   PROJECT MGMT                   VERSION CONTROL        │
-│                                                                                         │
+│   PMS SYSTEMS (30)                      DISPUTE/CHARGEBACK PORTALS (21)                  │
+│   ────────────────                      ───────────────────────────────                  │
+│   ┌──────────────┐  ┌──────────────┐    ┌──────────────┐  ┌──────────────┐              │
+│   │  Enterprise  │  │  Boutique/   │    │  Prevention  │  │ Card Network │              │
+│   │  (15 systems)│  │  Independent │    │  (3 adapters)│  │ (4 adapters) │              │
+│   └──────┬───────┘  │  (6 systems) │    └──────┬───────┘  └──────┬───────┘              │
+│          │          └──────┬───────┘           │                 │                       │
+│   ┌──────┴───────┐  ┌─────┴────────┐    ┌─────┴────────┐  ┌────┴─────────┐              │
+│   │  Vacation    │  │ Brand-Specific│    │  Merchant    │  │  Third-Party │              │
+│   │  Rental      │  │ (5 systems   │    │  Processors  │  │  (5 adapters)│              │
+│   │  (4 systems) │  │  w/ loyalty) │    │  (9 adapters)│  │              │              │
+│   └──────┬───────┘  └──────┬───────┘    └──────┬───────┘  └──────┬───────┘              │
+│          │                 │                    │                 │                       │
+│          └─────────────────┴────────────────────┴─────────────────┘                      │
+│                                    │                                                     │
+│                                    ▼                                                     │
+│                    ┌───────────────────────────────────┐                                 │
+│                    │       INTEGRATION SERVICE         │                                 │
+│                    │  • Full two-way sync (all 51)    │                                 │
+│                    │  • Webhook handling               │                                 │
+│                    │  • Credential encryption          │                                 │
+│                    │  • Event logging                  │                                 │
+│                    │  • Demo mode support              │                                 │
+│                    └───────────────────────────────────┘                                 │
+│                                    │                                                     │
+│        ┌───────────────────────────┼───────────────────────────┐                        │
+│        │                           │                           │                        │
+│        ▼                           ▼                           ▼                        │
+│   ┌──────────┐              ┌──────────┐              ┌──────────┐                      │
+│   │  Slack   │              │   Jira   │              │  GitHub  │                      │
+│   │  Alerts  │              │  Issues  │              │   PRs    │                      │
+│   └──────────┘              └──────────┘              └──────────┘                      │
+│                                                                                          │
+│   COMMUNICATION                   PROJECT MGMT                   VERSION CONTROL         │
+│                                                                                          │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 10.2 Supported Integrations
+### 10.2 PMS Integrations (30 Systems)
+
+| Category | Count | Systems | Features |
+|----------|-------|---------|----------|
+| **Enterprise** | 15 | Oracle Opera Cloud, Mews, Cloudbeds, protel, StayNTouch, Apaleo, Maestro, SynXis, OPERA Cloud Simphony, Infor HMS, Galaxy Lightspeed, Visual Matrix, ResNexus, Hotelogix, eZee Absolute | Full two-way sync, evidence collection |
+| **Boutique/Independent** | 6 | AutoClerk, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS | Full two-way sync, evidence collection |
+| **Vacation Rental** | 4 | Guesty, Hostaway, Lodgify, Escapia | Rental agreements, damage deposits, guest verification |
+| **Brand-Specific** | 5 | Marriott FOSSE/MARSHA, Hilton OnQ, Hyatt OPERA, IHG Concerto, Best Western Central | Loyalty program integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards) |
+
+### 10.3 Dispute/Chargeback Portal Integrations (21 Adapters)
+
+| Category | Count | Portals | Capabilities |
+|----------|-------|---------|-------------|
+| **Prevention** | 3 | Verifi (Visa), Ethoca (Mastercard), RDR | Real-time alerts, pre-dispute deflection |
+| **Card Networks** | 4 | Visa Resolve Online, Mastercard Connect, Amex Dispute Center, Discover eDisputes | Evidence submission, status tracking, case management |
+| **Merchant Processors** | 9 | Stripe, Adyen, Shift4, Elavon, Chase Paymentech, Worldpay, Global Payments, TSYS, First Data | Webhook disputes, evidence upload, representment |
+| **Third-Party** | 5 | Merlink, Chargebacks911, SERTIFI, Midigator, DisputeHelp | Full 2-way sync, case management, analytics |
+
+### 10.4 Other Integrations
 
 | Category | Provider | Status | Capabilities |
 |----------|----------|--------|--------------|
-| **Payment** | Stripe | ✅ Active | Disputes, webhooks, sync |
-| **Payment** | Adyen | ✅ Active | Chargebacks, notifications |
-| **Payment** | Shift4 | ✅ Active | Disputes, events |
-| **Payment** | Elavon | ✅ Active | Chargeback notifications |
-| **PMS** | Mews | ✅ Active | Reservations, guest data |
-| **PMS** | Oracle Opera Cloud | ✅ Active | Folios, stay details |
-| **PMS** | Cloudbeds | ✅ Active | Bookings, payments |
-| **Comm** | Slack | ✅ Active | Alerts, notifications |
-| **Comm** | MS Teams | 🚧 Planned | Notifications |
-| **PM** | Jira | ✅ Active | Issue sync, backlog |
-| **PM** | GitHub | ✅ Active | Issues, PRs, webhooks |
-| **Email** | SendGrid | ✅ Active | Transactional emails |
-| **Email** | AWS SES | ✅ Active | Bulk notifications |
+| **Comm** | Slack | Active | Alerts, notifications |
+| **Comm** | MS Teams | Planned | Notifications |
+| **PM** | Jira | Active | Issue sync, backlog |
+| **PM** | GitHub | Active | Issues, PRs, webhooks |
+| **Email** | SendGrid | Active | Transactional emails |
+| **Email** | AWS SES | Active | Bulk notifications |
 
-### 10.3 Integration Configuration
+### 10.5 Integration Configuration
 
 ```javascript
 // Example: Creating a Stripe integration

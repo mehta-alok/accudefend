@@ -20,7 +20,14 @@ function getRedisClient() {
       maxRetriesPerRequest: 3,
       retryDelayOnFailover: 100,
       enableReadyCheck: true,
-      lazyConnect: true
+      lazyConnect: true,
+      retryStrategy(times) {
+        if (times > 3) {
+          logger.warn('Redis: Max retry attempts reached, stopping reconnect');
+          return null; // Stop retrying
+        }
+        return Math.min(times * 200, 2000);
+      }
     });
 
     redisClient.on('connect', () => {
@@ -28,11 +35,18 @@ function getRedisClient() {
     });
 
     redisClient.on('error', (error) => {
-      logger.error('Redis connection error:', error);
+      if (error.code !== 'ECONNREFUSED' || !redisClient._retryLogged) {
+        logger.error('Redis connection error:', { code: error.code });
+        redisClient._retryLogged = true;
+      }
     });
 
     redisClient.on('close', () => {
-      logger.warn('Redis connection closed');
+      // Only log once
+      if (!redisClient._closeLogged) {
+        logger.warn('Redis connection closed');
+        redisClient._closeLogged = true;
+      }
     });
   }
 
