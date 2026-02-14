@@ -13,7 +13,15 @@
  *   scheduled-sync    — Periodic sync jobs (PMS + dispute portals)
  */
 
-const { Queue, Worker } = require('bullmq');
+// Lazy-load bullmq to avoid hanging at require time when Redis is unavailable
+let Queue, Worker;
+function loadBullMQ() {
+  if (!Queue) {
+    const bullmq = require('bullmq');
+    Queue = bullmq.Queue;
+    Worker = bullmq.Worker;
+  }
+}
 const logger = require('../../utils/logger');
 
 // Redis connection config — reuse existing Redis URL
@@ -48,6 +56,7 @@ const queues = {};
 const workers = {};
 
 function getQueue(name) {
+  loadBullMQ();
   if (!queues[name]) {
     queues[name] = new Queue(name, {
       connection: REDIS_CONNECTION,
@@ -73,6 +82,7 @@ const getQueues = () => ({
 // ===========================
 
 async function initializeWorkers() {
+  loadBullMQ();
   logger.info('[QueueManager] Initializing BullMQ workers...');
 
   try {

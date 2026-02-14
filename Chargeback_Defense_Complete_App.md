@@ -49,6 +49,12 @@
 - Timeline of case events
 - Case notes (internal/external)
 - Action buttons: Submit, Generate PDF, Download
+- **Outcome tab** for resolved cases (WON/LOST) with detailed resolution data
+- **Resolution banners:** green banner for WON cases, red banner for LOST cases
+- **Win details:** win factors, recovered amount, processor statement
+- **Loss details:** denial reason, denial code, evidence gaps analysis
+- **Arbitration filing** via 3-step modal workflow for LOST cases
+- Auto-navigation to Outcome tab when viewing resolved cases
 
 ### 5. Settings Page
 
@@ -100,7 +106,23 @@
 - Touch-friendly buttons and interactions
 - Optimized for all screen sizes
 
-### 11. Interactive Features
+### 11. Dispute Outcome & Arbitration
+
+- **Outcome tracking** for resolved cases with WON/LOST resolution data
+- **WON cases display:** win factors contributing to the successful outcome, recovered amount, processor statement confirming reversal
+- **LOST cases display:** denial reason from the processor/issuer, denial code, evidence gaps that weakened the case
+- **Resolution banners:** color-coded banners (green for WON, red for LOST) displayed prominently in Case Detail view
+- **Arbitration workflow** for LOST cases with a 3-step filing modal:
+  1. **Review** - Review case details and denial reasons
+  2. **Evidence & Narrative** - Upload additional evidence (ARBITRATION_DOCUMENT type) and compose arbitration narrative
+  3. **Confirm** - Review and submit arbitration filing
+- **API endpoint:** `POST /api/cases/:id/arbitration` for submitting arbitration requests
+- **Frontend components:**
+  - OutcomeTab (~250 lines) - Displays resolution details, win/loss factors, and arbitration options
+  - ArbitrationModal (~250 lines) - 3-step modal wizard for filing arbitration
+- **Auto-navigation:** Resolved cases automatically navigate to the Outcome tab on load
+
+### 12. Interactive Features
 
 - Search cases by ID, guest name, or confirmation number
 - Filter by status, processor, date range
@@ -134,7 +156,11 @@ frontend/src/
 ├── components/
 │   ├── Layout.jsx             # Main layout with sidebar & navigation
 │   ├── Tutorial.jsx           # Tutorial, HelpButton, HelpPanel
-│   └── NotificationPanel.jsx  # Notification dropdown panel
+│   ├── NotificationPanel.jsx  # Notification dropdown panel
+│   ├── OutcomeTab.jsx         # Dispute outcome display (WON/LOST resolution data)
+│   ├── ArbitrationModal.jsx   # 3-step arbitration filing modal
+│   ├── ReservationViewer.jsx  # Reservation details viewer
+│   └── GuestFolioViewer.jsx   # Guest folio details viewer
 ├── pages/
 │   ├── Login.jsx              # Authentication
 │   ├── Dashboard.jsx          # Main dashboard with metrics

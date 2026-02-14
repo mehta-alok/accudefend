@@ -23,6 +23,8 @@
 - **51 Two-Way Integrations** - 30 PMS systems and 21 dispute & chargeback portal adapters
 - **Evidence Management** - AWS S3 storage with secure presigned URLs
 - **Real-Time Dashboard** - Live metrics, trends, and case management
+- **Dispute Outcome Tracking** - Detailed resolution data for WON/LOST cases with win factors and denial analysis
+- **Arbitration Workflow** - 3-step arbitration filing with evidence upload and narrative submission
 - **Role-Based Access** - Property-level data isolation with RBAC
 - **Audit Trail** - Complete compliance logging for all actions
 - **Dispute & Chargeback Integration** - 21 adapters across card networks, processors, and third-party services
@@ -144,6 +146,7 @@ npm run dev
 - PMS integration pages (read-only)
 - Dispute adapter status views
 - All 51 integration configurations visible
+- Dispute outcome details (WON/LOST resolution data, arbitration filing)
 
 ### Access Points
 
@@ -183,6 +186,7 @@ npm run dev
 | POST | `/api/cases` | Create case |
 | PATCH | `/api/cases/:id/status` | Update status |
 | POST | `/api/cases/:id/analyze` | Run AI analysis |
+| POST | `/api/cases/:id/arbitration` | File for arbitration |
 
 ### Evidence
 | Method | Endpoint | Description |
@@ -236,6 +240,41 @@ The system analyzes chargebacks using a weighted scoring model:
 | 70-84% | REVIEW_RECOMMENDED | Manual approval needed |
 | 50-69% | GATHER_MORE_EVIDENCE | Missing documentation |
 | 0-49% | UNLIKELY_TO_WIN | Consider accepting |
+
+---
+
+## Dispute Outcomes & Arbitration
+
+### Resolution Data
+
+When a dispute is resolved, AccuDefend tracks detailed outcome information:
+
+**Won Cases:**
+- Recovery amount and processor response code
+- Win factors (specific evidence that won the case)
+- Official processor/issuer statement
+
+**Lost Cases:**
+- Denial code and detailed explanation
+- Evidence gaps (what was missing)
+- Processor/issuer denial statement
+- Arbitration eligibility and deadline
+
+### Arbitration Workflow
+
+For lost cases eligible for arbitration, AccuDefend provides:
+
+1. **Review** - Case summary, arbitration fee, deadline, and terms
+2. **Evidence & Narrative** - Upload additional documents and write arbitration narrative
+3. **Confirm** - Review everything and file for arbitration
+
+| Status | Description |
+|--------|-------------|
+| AVAILABLE | Arbitration can be filed |
+| FILED | Arbitration has been submitted |
+| IN_PROGRESS | Arbitration is being reviewed |
+| WON | Arbitration ruled in hotel's favor |
+| LOST | Arbitration ruled against hotel |
 
 ---
 
@@ -361,7 +400,7 @@ accudefend/
 │   │   │   ├── Login.jsx              # Authentication
 │   │   │   ├── Dashboard.jsx          # Main dashboard with metrics
 │   │   │   ├── Cases.jsx              # Case list & management
-│   │   │   ├── CaseDetail.jsx         # Individual case details
+│   │   │   ├── CaseDetail.jsx         # Individual case details with Outcome tab & Arbitration
 │   │   │   ├── Analytics.jsx          # Reports & analytics
 │   │   │   ├── Settings.jsx           # System configuration
 │   │   │   ├── PMSIntegration.jsx     # PMS integrations

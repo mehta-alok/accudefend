@@ -24,7 +24,9 @@
 **Layer 1: Presentation Layer**
 - Web Dashboard (React 18 SPA with Vite)
 - 9 Pages: Dashboard, Cases, CaseDetail, Analytics, Settings, PMSIntegration, DisputeIntegration, Tutorial, Login
-- 3 Components: Layout, Tutorial/Help, NotificationPanel
+- 7 Components: Layout, Tutorial/Help, NotificationPanel, OutcomeTab, ArbitrationModal, ReservationViewer, GuestFolioViewer
+- OutcomeTab (~250 lines): Displays WON/LOST resolution data, win factors, denial reasons, and arbitration options
+- ArbitrationModal (~250 lines): 3-step modal wizard (Review, Evidence & Narrative, Confirm) for filing arbitration on LOST cases
 - Tailwind CSS 3 for responsive design
 
 **Layer 2: API Gateway**
@@ -36,6 +38,7 @@
 **Layer 3: Business Logic**
 - Node.js 20 / Express 4 backend
 - 9 route handlers (auth, cases, evidence, analytics, admin, disputes, notifications, pms, webhooks)
+- Arbitration endpoint: `POST /api/cases/:id/arbitration` for filing arbitration on lost disputes
 - 8 service modules:
   - fraudDetection.js - AI confidence scoring engine
   - aiDefenseConfig.js - AI defense configuration
@@ -99,6 +102,9 @@
 - Monitor for chargebacks
 - Evidence maintained 180 days
 - Ready for dispute response
+- **Dispute resolution outcomes:** WON cases display win factors, recovered amount, and processor statement; LOST cases display denial reason, denial code, and evidence gaps
+- **Arbitration filing:** For LOST cases, staff can file arbitration through a 3-step workflow (Review, Evidence & Narrative, Confirm) via `POST /api/cases/:id/arbitration`
+- **Resolution banners:** Color-coded banners (green/red) indicate case outcome at a glance
 
 ---
 
@@ -212,6 +218,7 @@ Cases:
   POST   /api/cases
   PATCH  /api/cases/:id/status
   POST   /api/cases/:id/analyze
+  POST   /api/cases/:id/arbitration
 
 Evidence:
   GET    /api/evidence/case/:id

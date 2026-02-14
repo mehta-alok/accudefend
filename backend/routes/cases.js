@@ -340,6 +340,23 @@ router.get('/:id', async (req, res) => {
           positive: ['VALID_ID_SCAN', 'MATCHING_ADDRESS', 'CHIP_TRANSACTION', 'LOYALTY_MEMBER', 'RETURN_GUEST'],
           negative: []
         },
+        resolution: {
+          outcome: 'WON',
+          reason: 'Compelling evidence — signed registration card and valid government ID matched cardholder identity. EMV chip transaction confirmed.',
+          recoveredAmount: 2100.00,
+          processorResponseCode: 'REVERSED',
+          resolvedDate: new Date(Date.now() - 2*3600000).toISOString(),
+          winFactors: [
+            'Signed registration card with matching signature on file',
+            'Valid government-issued photo ID matched cardholder name',
+            'EMV chip transaction — no liability shift applicable',
+            'Key card access logs confirm full 5-night stay',
+            'Guest is a repeat loyalty member with 12 prior stays',
+            'Folio charges match reservation confirmation sent to cardholder email'
+          ],
+          processorNotes: 'Issuing bank has reviewed the submitted evidence package and determined the merchant provided sufficient compelling evidence to reverse this chargeback. The signed registration card, government ID, and EMV chip read confirm cardholder presence and authorization. Chargeback amount of $2,100.00 has been credited back to the merchant account.',
+          arbitration: null
+        },
         resolvedAt: new Date(Date.now() - 2*3600000).toISOString(),
         createdAt: new Date(Date.now() - 24*3600000).toISOString()
       },
@@ -414,6 +431,21 @@ router.get('/:id', async (req, res) => {
           positive: ['VALID_ID_SCAN', 'MATCHING_ADDRESS', 'RETURN_GUEST', 'CHIP_TRANSACTION'],
           negative: []
         },
+        resolution: {
+          outcome: 'WON',
+          reason: 'Guest claimed credit was not processed for early checkout, but folio shows refund was issued on checkout date and posted to same card.',
+          recoveredAmount: 1875.00,
+          processorResponseCode: 'REVERSED',
+          resolvedDate: new Date(Date.now() - 24*3600000).toISOString(),
+          winFactors: [
+            'Refund receipt showing credit processed to card ending 3456 on checkout date',
+            'ARN (Acquirer Reference Number) provided matching the refund transaction',
+            'Guest folio showing original charge and subsequent credit adjustment',
+            'Email correspondence confirming refund was communicated to guest'
+          ],
+          processorNotes: 'The merchant demonstrated that the credit in question was processed on the checkout date. The ARN provided confirms the refund was submitted to the card network. The issuing bank has confirmed receipt of the credit and is reversing the chargeback. Full amount of $1,875.00 restored to merchant.',
+          arbitration: null
+        },
         resolvedAt: new Date(Date.now() - 24*3600000).toISOString(),
         createdAt: new Date(Date.now() - 96*3600000).toISOString()
       },
@@ -438,6 +470,32 @@ router.get('/:id', async (req, res) => {
         fraudIndicators: {
           positive: [],
           negative: ['NO_ID_SCAN', 'NO_SIGNATURE', 'SWIPED_NOT_CHIP', 'FIRST_TIME_GUEST']
+        },
+        resolution: {
+          outcome: 'LOST',
+          reason: 'Insufficient evidence — terminal was not EMV-compliant. Magnetic stripe was used instead of chip, triggering liability shift to merchant.',
+          denialCode: 'EVIDENCE_INSUFFICIENT',
+          recoveredAmount: 0,
+          processorResponseCode: 'UPHELD',
+          resolvedDate: new Date(Date.now() - 48*3600000).toISOString(),
+          denialDetails: 'The issuing bank has reviewed the representment and determined that the merchant bears liability under the EMV Liability Shift framework. The transaction was processed via magnetic stripe swipe rather than EMV chip read. Under Discover Network rules (reason code 10.1), when a chip card is presented but the terminal processes via fallback to magnetic stripe, liability shifts to the merchant. The merchant failed to provide evidence of a chip-read transaction or a valid reason for the fallback.',
+          evidenceGaps: [
+            'No EMV chip transaction proof — card was swiped, not dipped',
+            'No signed registration card on file for this guest',
+            'No government-issued photo ID was collected at check-in',
+            'No evidence of guest identity verification (loyalty program, prior stays, etc.)',
+            'Terminal fallback report not provided to justify magnetic stripe usage'
+          ],
+          processorNotes: 'Elavon Case Review: The representment evidence was reviewed by the dispute resolution team. The merchant was unable to demonstrate EMV compliance for this transaction. Under network rules, liability for counterfeit fraud shifts to the party (merchant or issuer) that has not adopted EMV chip technology. Since the terminal processed the transaction via magnetic stripe swipe despite the card being chip-enabled, the merchant bears liability. Representment denied. The merchant may file for arbitration within 10 days of this decision.',
+          arbitration: {
+            eligible: true,
+            deadline: new Date(Date.now() + 8*86400000).toISOString(),
+            fee: 500,
+            status: 'AVAILABLE',
+            filedDate: null,
+            documents: [],
+            instructions: 'To file for arbitration, you must submit a written narrative explaining why the dispute decision should be overturned, along with any additional supporting evidence not previously submitted. The arbitration filing fee of $500.00 is non-refundable if the arbitration ruling is not in your favor. The card network (Discover) will make the final binding decision.'
+          }
         },
         resolvedAt: new Date(Date.now() - 48*3600000).toISOString(),
         createdAt: new Date(Date.now() - 120*3600000).toISOString()
@@ -949,6 +1007,86 @@ router.post('/:id/notes', requireRole('ADMIN', 'MANAGER', 'STAFF'), async (req, 
         isInternal: true,
         user: { firstName: req.user.firstName || 'Admin', lastName: req.user.lastName || 'User' },
         createdAt: new Date().toISOString()
+      },
+      isDemo: true
+    });
+  }
+});
+
+/**
+ * POST /api/cases/:id/arbitration
+ * File for arbitration on a lost case
+ */
+router.post('/:id/arbitration', requireRole('ADMIN', 'MANAGER', 'STAFF'), async (req, res) => {
+  try {
+    const { narrative } = req.body;
+
+    if (!narrative || narrative.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Arbitration narrative is required'
+      });
+    }
+
+    // Check access
+    const existing = await prisma.chargeback.findFirst({
+      where: {
+        id: req.params.id,
+        ...req.propertyFilter
+      }
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Chargeback not found'
+      });
+    }
+
+    if (existing.status !== 'LOST') {
+      return res.status(400).json({
+        error: 'Bad Request',
+        message: 'Arbitration can only be filed for lost cases'
+      });
+    }
+
+    // Create timeline event
+    await prisma.timelineEvent.create({
+      data: {
+        chargebackId: existing.id,
+        eventType: 'USER_ACTION',
+        title: 'Arbitration Filed',
+        description: `Arbitration filed by ${req.user.firstName} ${req.user.lastName}. Narrative: ${narrative.substring(0, 100)}...`
+      }
+    });
+
+    logger.info(`Arbitration filed: ${existing.caseNumber} by ${req.user.email}`);
+
+    res.status(201).json({
+      message: 'Arbitration filed successfully',
+      arbitration: {
+        status: 'FILED',
+        filedDate: new Date().toISOString(),
+        filedBy: `${req.user.firstName} ${req.user.lastName}`,
+        narrative: narrative.trim()
+      }
+    });
+
+  } catch (error) {
+    // Demo mode fallback
+    logger.warn('File arbitration: database unavailable, returning demo response');
+    const { narrative } = req.body;
+    if (!narrative || narrative.trim().length === 0) {
+      return res.status(400).json({ error: 'Validation Error', message: 'Arbitration narrative is required' });
+    }
+    res.status(201).json({
+      message: 'Arbitration filed successfully (Demo Mode)',
+      arbitration: {
+        status: 'FILED',
+        filedDate: new Date().toISOString(),
+        filedBy: req.user.firstName ? `${req.user.firstName} ${req.user.lastName}` : 'Admin User',
+        narrative: narrative.trim(),
+        caseNumber: req.params.id
       },
       isDemo: true
     });

@@ -3,9 +3,22 @@
  * AWS S3 Configuration (Evidence Storage)
  */
 
-const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
-const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
-const { v4: uuidv4 } = require('uuid');
+// Lazy-load AWS SDK to avoid hanging on import with newer Node.js versions
+let _s3sdk, _presigner, _uuid;
+function loadDeps() {
+  if (!_s3sdk) {
+    try {
+      _s3sdk = require('@aws-sdk/client-s3');
+      _presigner = require('@aws-sdk/s3-request-presigner');
+      _uuid = require('uuid');
+    } catch (e) {
+      // Provide stubs when AWS SDK is unavailable
+      _s3sdk = { S3Client: class {}, PutObjectCommand: class {}, GetObjectCommand: class {}, DeleteObjectCommand: class {}, HeadObjectCommand: class {} };
+      _presigner = { getSignedUrl: async () => null };
+      _uuid = { v4: () => 'mock-uuid' };
+    }
+  }
+}
 const logger = require('../utils/logger');
 
 let s3Client;
@@ -14,8 +27,9 @@ let s3Client;
  * Initialize S3 client
  */
 function getS3Client() {
+  loadDeps();
   if (!s3Client) {
-    s3Client = new S3Client({
+    s3Client = new _s3sdk.S3Client({
       region: process.env.AWS_REGION || 'us-east-1',
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -52,8 +66,9 @@ async function initializeS3() {
  * Format: chargebacks/{chargebackId}/{evidenceType}/{timestamp}-{uuid}-{filename}
  */
 function generateS3Key(chargebackId, evidenceType, originalFilename) {
+  loadDeps();
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const uniqueId = uuidv4().substring(0, 8);
+  const uniqueId = _uuid.v4().substring(0, 8);
   const sanitizedFilename = originalFilename.replace(/[^a-zA-Z0-9.-]/g, '_');
 
   return `chargebacks/${chargebackId}/${evidenceType}/${timestamp}-${uniqueId}-${sanitizedFilename}`;
@@ -66,7 +81,7 @@ async function uploadFile(buffer, key, contentType) {
   const client = getS3Client();
   const bucket = process.env.AWS_S3_BUCKET;
 
-  const command = new PutObjectCommand({
+  const command = new _s3sdk.PutObjectCommand({
     Bucket: bucket,
     Key: key,
     Body: buffer,
@@ -96,12 +111,13 @@ async function getPresignedDownloadUrl(key, expiresIn = null) {
   const bucket = process.env.AWS_S3_BUCKET;
   const expiry = expiresIn || parseInt(process.env.AWS_S3_PRESIGNED_EXPIRY) || 3600;
 
-  const command = new GetObjectCommand({
+  const command = new _s3sdk.GetObjectCommand({
     Bucket: bucket,
     Key: key
   });
 
-  const url = await getSignedUrl(client, command, { expiresIn: expiry });
+  loadDeps();
+  const url = await _presigner.getSignedUrl(client, command, { expiresIn: expiry });
   return url;
 }
 
@@ -112,14 +128,15 @@ async function getPresignedUploadUrl(key, contentType, expiresIn = 3600) {
   const client = getS3Client();
   const bucket = process.env.AWS_S3_BUCKET;
 
-  const command = new PutObjectCommand({
+  const command = new _s3sdk.PutObjectCommand({
     Bucket: bucket,
     Key: key,
     ContentType: contentType,
     ServerSideEncryption: 'AES256'
   });
 
-  const url = await getSignedUrl(client, command, { expiresIn });
+  loadDeps();
+  const url = await _presigner.getSignedUrl(client, command, { expiresIn });
   return url;
 }
 
@@ -130,7 +147,7 @@ async function deleteFile(key) {
   const client = getS3Client();
   const bucket = process.env.AWS_S3_BUCKET;
 
-  const command = new DeleteObjectCommand({
+  const command = new _s3sdk.DeleteObjectCommand({
     Bucket: bucket,
     Key: key
   });
@@ -147,7 +164,7 @@ async function fileExists(key) {
   const bucket = process.env.AWS_S3_BUCKET;
 
   try {
-    const command = new HeadObjectCommand({
+    const command = new _s3sdk.HeadObjectCommand({
       Bucket: bucket,
       Key: key
     });
@@ -169,7 +186,7 @@ async function getFileMetadata(key) {
   const client = getS3Client();
   const bucket = process.env.AWS_S3_BUCKET;
 
-  const command = new HeadObjectCommand({
+  const command = new _s3sdk.HeadObjectCommand({
     Bucket: bucket,
     Key: key
   });

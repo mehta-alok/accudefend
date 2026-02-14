@@ -43,15 +43,21 @@ function getPrismaClient() {
 async function connectDatabase() {
   try {
     const client = getPrismaClient();
-    await client.$connect();
 
-    // Verify connection with a simple query
-    await client.$queryRaw`SELECT 1 as connected`;
+    // Add connection timeout (5 seconds) to avoid hanging when DB is unavailable
+    const connectPromise = client.$connect().then(() =>
+      client.$queryRaw`SELECT 1 as connected`
+    );
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database connection timeout (5s)')), 5000)
+    );
+
+    await Promise.race([connectPromise, timeoutPromise]);
 
     logger.info('AccuDefend: Database connection established');
     return client;
   } catch (error) {
-    logger.error('Database connection failed:', error);
+    logger.error('Database connection failed:', error.message || error);
     throw error;
   }
 }

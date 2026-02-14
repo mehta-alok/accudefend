@@ -93,6 +93,7 @@ npm run dev
 | PMS Integration Pages | ✅ | All 30 PMS systems visible (read-only) |
 | Dispute Adapter Views | ✅ | All 21 adapters visible (read-only) |
 | Analytics & Reports | ✅ | Mock trend data |
+| Dispute Outcomes | ✅ | WON/LOST resolution data, arbitration filing |
 | Evidence Upload | ❌ | Requires S3 configuration |
 | Real-time Webhooks | ❌ | Requires external processor accounts |
 | Data Persistence | ❌ | Data resets on server restart |

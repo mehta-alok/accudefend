@@ -167,7 +167,8 @@ export const getStatusColor = (status) => {
     WON: 'badge-won',
     LOST: 'badge-lost',
     EXPIRED: 'badge-expired',
-    CANCELLED: 'badge-cancelled'
+    CANCELLED: 'badge-cancelled',
+    ARBITRATION: 'badge-in-review'
   };
   return colors[status] || 'badge-pending';
 };

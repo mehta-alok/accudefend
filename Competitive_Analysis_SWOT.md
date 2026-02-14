@@ -86,6 +86,8 @@ Generic Solutions     *---+------------- Hotel-Specific
 - AI-powered weighted confidence scoring (40% reason code, 35% evidence, 25% indicators)
 - 4-tier recommendation system for dispute handling
 - Brand-specific loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards)
+- Dispute outcome tracking with detailed resolution data (win factors, denial analysis)
+- Built-in arbitration workflow with 3-step filing process
 - 10-30 day response timeframe vs. competitor 30-90 days
 
 **Threats:**
@@ -1163,6 +1165,8 @@ Others:         ================             16%
 - Brand-specific loyalty integration: Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards
 - 4 payment processors with real-time webhook processing (Stripe, Adyen, Shift4, Elavon)
 - AI-powered weighted confidence scoring (40/35/25 weighting) with 4-tier recommendation system
+- Dispute outcome tracking with detailed resolution data (win factors, recovered amounts, denial analysis with denial codes and evidence gaps)
+- Built-in arbitration workflow with 3-step filing process (Review, Evidence & Narrative, Confirm) -- no competitor offers integrated arbitration
 - Modern, scalable tech stack (React 18, Node.js 20, PostgreSQL 16, AWS ECS Fargate, Terraform IaC)
 - Superior automation (95% vs. competitors' 10-40%)
 - Transparent pricing with no per-case fees

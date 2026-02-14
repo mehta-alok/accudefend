@@ -1,67 +1,22 @@
 /**
  * AccuDefend Chargeback Defense System
- * Winston Logger Configuration
+ * Logger Configuration
+ *
+ * Console-based logger for maximum compatibility across Node.js versions.
  */
 
-const winston = require('winston');
+const ts = () => new Date().toISOString().replace('T', ' ').substring(0, 19);
 
-const { combine, timestamp, printf, colorize, errors } = winston.format;
-
-// Custom log format
-const logFormat = printf(({ level, message, timestamp, stack, ...metadata }) => {
-  let log = `${timestamp} [AccuDefend-CBD] ${level}: ${message}`;
-
-  if (Object.keys(metadata).length > 0) {
-    log += ` ${JSON.stringify(metadata)}`;
-  }
-
-  if (stack) {
-    log += `\n${stack}`;
-  }
-
-  return log;
-});
-
-// Create logger instance
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: combine(
-    errors({ stack: true }),
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    logFormat
-  ),
-  defaultMeta: { service: 'accudefend' },
-  transports: [
-    // Console output
-    new winston.transports.Console({
-      format: combine(
-        colorize({ all: true }),
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        logFormat
-      )
-    })
-  ]
-});
-
-// Add file transport in production
-if (process.env.NODE_ENV === 'production') {
-  logger.add(new winston.transports.File({
-    filename: 'logs/error.log',
-    level: 'error',
-    maxsize: 5242880, // 5MB
-    maxFiles: 5
-  }));
-
-  logger.add(new winston.transports.File({
-    filename: 'logs/combined.log',
-    maxsize: 5242880,
-    maxFiles: 5
-  }));
-}
-
-// HTTP stream for Morgan
-logger.http = (message) => {
-  logger.log({ level: 'http', message });
+const logger = {
+  info: (msg, ...args) => console.log(`${ts()} [AccuDefend] info: ${msg}`, ...args),
+  warn: (msg, ...args) => console.warn(`${ts()} [AccuDefend] warn: ${msg}`, ...args),
+  error: (msg, ...args) => console.error(`${ts()} [AccuDefend] error: ${msg}`, ...args),
+  debug: (msg, ...args) => {
+    if (process.env.LOG_LEVEL === 'debug') console.debug(`${ts()} [AccuDefend] debug: ${msg}`, ...args);
+  },
+  http: (msg) => console.log(`${ts()} [AccuDefend] http: ${msg}`),
+  log: ({ level, message }) => console.log(`${ts()} [AccuDefend] ${level}: ${message}`),
+  stream: { write: (msg) => console.log(msg.trim()) }
 };
 
 module.exports = logger;

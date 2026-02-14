@@ -1,6 +1,6 @@
 # AccuDefend MVP - Product Document
 
-**Version:** 3.0
+**Version:** 4.0
 **Last Updated:** February 13, 2026
 **Status:** In Production
 **Document Owner:** Aalok Mehta
@@ -58,7 +58,7 @@ Hotels lose $5,000-$50,000+ annually to chargebacks due to:
 | **Storage** | AWS S3 | Evidence files with presigned URLs |
 | **Auth** | JWT | Access (15m) + Refresh (7d) tokens |
 | **Validation** | Zod 3 | Input validation schemas |
-| **Logging** | Winston 3 | Structured logging |
+| **Logging** | Console-based logger (Node v25.5 compatible) | Structured logging |
 | **Infrastructure** | AWS (ECS Fargate, Aurora, ElastiCache, CloudFront) | Multi-region with Terraform IaC |
 | **DevOps** | Docker, Docker Compose, GitHub Actions | Production + Dev containers |
 
@@ -174,7 +174,7 @@ Weighted scoring model calculating confidence score (0-100):
 |------|-------------|
 | Dashboard | Real-time KPIs, metrics, charts, urgent cases |
 | Cases | Case list with search, filter, and status management |
-| CaseDetail | Individual case view with evidence, timeline, AI analysis |
+| CaseDetail | Individual case view with evidence, timeline, AI analysis, **Outcome tab, Arbitration workflow** |
 | Analytics | Trends, win rates by reason code, property comparison |
 | Settings | AI configuration, email notifications, storage settings |
 | PMSIntegration | Connect/manage 30 PMS systems across 4 categories |
@@ -242,6 +242,48 @@ Weighted scoring model calculating confidence score (0-100):
 - Floating help button (bottom-right)
 - Contextual help panel with navigation
 
+### 12. Dispute Outcome & Resolution Tracking (NEW)
+
+**Status:** Implemented
+
+Comprehensive resolution tracking for all completed disputes:
+
+**Won Cases:**
+- Recovery amount with processor response code (REVERSED)
+- Win factors analysis (specific evidence that won the case)
+- Official processor/issuer statement
+- Full financial recovery details
+
+**Lost Cases:**
+- Denial code (e.g., EVIDENCE_INSUFFICIENT) with detailed explanation
+- Evidence gaps analysis (what was missing from the submission)
+- Processor/issuer denial statement
+- Financial impact summary
+
+### 13. Arbitration Workflow (NEW)
+
+**Status:** Implemented
+
+For lost cases eligible for arbitration:
+- Arbitration eligibility check with deadline tracking
+- 3-step filing modal: Review → Evidence & Narrative → Confirm
+- Additional document upload for arbitration
+- Written narrative submission
+- Fee disclosure and confirmation
+- Real-time status tracking (AVAILABLE → FILED → IN_PROGRESS → WON/LOST)
+
+**New API Endpoint:**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/cases/:id/arbitration` | File for arbitration |
+
+**New Frontend Components:**
+- OutcomeTab - Resolution details for WON/LOST cases
+- ArbitrationModal - 3-step arbitration filing workflow
+- Resolution banners - Green (WON) / Red (LOST) status banners
+- Auto-navigation to Outcome tab for resolved cases
+
 ---
 
 ## Current API Endpoints
@@ -262,6 +304,7 @@ Weighted scoring model calculating confidence score (0-100):
 | POST | `/api/cases` | Create case |
 | PATCH | `/api/cases/:id/status` | Update status |
 | POST | `/api/cases/:id/analyze` | Run AI analysis |
+| POST | `/api/cases/:id/arbitration` | File for arbitration |
 
 ### Evidence
 | Method | Endpoint | Description |
@@ -471,6 +514,7 @@ accudefend/
 | 1.0 | January 28, 2026 | Initial MVP document |
 | 2.0 | February 2026 | Updated to reflect implemented system: added dispute integrations, notifications, 12+ PMS systems, full API endpoints, current tech stack (React 18, Node.js 20, PostgreSQL 16, Terraform IaC), cloud infrastructure details |
 | 3.0 | February 2026 | Expanded to 30 PMS systems (Enterprise, Boutique/Independent, Vacation Rental, Brand-Specific), 21 dispute/chargeback adapters with full two-way sync, 51 total integrations, brand-specific loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards) |
+| 4.0 | February 2026 | Added dispute outcome tracking (WON/LOST resolution data with win factors, denial codes, evidence gaps), arbitration workflow (3-step filing modal with evidence upload and narrative), OutcomeTab and ArbitrationModal components, auto-navigation to Outcome tab, resolution banners, new POST /api/cases/:id/arbitration endpoint |
 
 ---
 

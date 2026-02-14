@@ -30,7 +30,15 @@ import {
   ShieldCheck,
   Loader2,
   CalendarCheck,
-  Search
+  Search,
+  Scale,
+  Gavel,
+  DollarSign,
+  FileWarning,
+  ShieldX,
+  Shield,
+  Award,
+  ChevronRight
 } from 'lucide-react';
 import { api, formatCurrency, formatDate, formatDateTime, getStatusColor, getReservationStatusColor, formatRelativeTime } from '../utils/api';
 import { useAuth } from '../hooks/useAuth';
@@ -48,8 +56,13 @@ export default function CaseDetail() {
     setLoading(true);
     try {
       const response = await api.get(`/cases/${id}`);
-      setCaseData(response.data.chargeback);
+      const data = response.data.chargeback;
+      setCaseData(data);
       setError(null);
+      // Auto-navigate to outcome tab for resolved cases
+      if (data.status === 'WON' || data.status === 'LOST') {
+        setActiveTab('outcome');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -94,8 +107,14 @@ export default function CaseDetail() {
     );
   }
 
+  const hasOutcome = caseData.status === 'WON' || caseData.status === 'LOST' || caseData.resolution;
+
   const tabs = [
     { id: 'overview', label: 'Overview', icon: FileText },
+    ...(hasOutcome ? [{
+      id: 'outcome', label: 'Outcome', icon: Scale,
+      badge: caseData.status === 'WON' ? 'won' : caseData.status === 'LOST' ? 'lost' : null
+    }] : []),
     { id: 'reservation', label: 'Reservation', icon: CalendarCheck, badge: caseData.reservationId ? 'linked' : null },
     { id: 'evidence', label: 'Evidence', icon: Upload, count: caseData.evidence?.length },
     { id: 'timeline', label: 'Timeline', icon: Clock, count: caseData.timeline?.length },
@@ -179,6 +198,54 @@ export default function CaseDetail() {
         </div>
       )}
 
+      {/* Outcome Resolution Banner */}
+      {caseData.status === 'WON' && caseData.resolution && (
+        <div className="card card-body bg-green-50 border-green-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-green-100">
+                <Award className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-green-900 text-lg">
+                  Dispute Won - {formatCurrency(caseData.resolution.recoveredAmount || caseData.amount)} Recovered
+                </p>
+                <p className="text-sm text-green-700">
+                  Resolved {formatDate(caseData.resolution.resolvedDate || caseData.resolvedAt)} | Processor: {caseData.resolution.processorResponseCode}
+                </p>
+              </div>
+            </div>
+            <CheckCircle className="w-8 h-8 text-green-500" />
+          </div>
+        </div>
+      )}
+
+      {caseData.status === 'LOST' && caseData.resolution && (
+        <div className="card card-body bg-red-50 border-red-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-red-100">
+                <ShieldX className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-red-900 text-lg">
+                  Dispute Lost - {formatCurrency(caseData.amount)}
+                </p>
+                <p className="text-sm text-red-700">
+                  {caseData.resolution.reason}
+                </p>
+                {caseData.resolution.arbitration?.eligible && caseData.resolution.arbitration?.status === 'AVAILABLE' && (
+                  <span className="inline-flex items-center mt-1 px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+                    <Gavel className="w-3 h-3 mr-1" /> Arbitration Available
+                  </span>
+                )}
+              </div>
+            </div>
+            <XCircle className="w-8 h-8 text-red-400" />
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="flex gap-8">
@@ -204,6 +271,16 @@ export default function CaseDetail() {
                 {tab.badge === 'linked' && (
                   <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">
                     Linked
+                  </span>
+                )}
+                {tab.badge === 'won' && (
+                  <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                    Won
+                  </span>
+                )}
+                {tab.badge === 'lost' && (
+                  <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+                    Lost
                   </span>
                 )}
               </button>
@@ -390,6 +467,10 @@ export default function CaseDetail() {
         </div>
       )}
 
+      {activeTab === 'outcome' && (
+        <OutcomeTab caseData={caseData} caseId={id} onUpdate={fetchCase} />
+      )}
+
       {activeTab === 'reservation' && (
         <ReservationTab caseData={caseData} caseId={id} onUpdate={fetchCase} />
       )}
@@ -405,6 +486,679 @@ export default function CaseDetail() {
       {activeTab === 'notes' && (
         <NotesTab caseId={id} notes={caseData.notes} onUpdate={fetchCase} />
       )}
+    </div>
+  );
+}
+
+// Outcome Tab Component - Shows win/loss details and arbitration
+function OutcomeTab({ caseData, caseId, onUpdate }) {
+  const [showArbitrationModal, setShowArbitrationModal] = useState(false);
+  const resolution = caseData.resolution;
+
+  if (!resolution) {
+    return (
+      <div className="card card-body text-center py-12">
+        <Scale className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-900">No Outcome Details Available</h3>
+        <p className="text-gray-500 mt-2">Resolution details will appear here once the dispute is resolved.</p>
+      </div>
+    );
+  }
+
+  // WON case display
+  if (resolution.outcome === 'WON') {
+    return (
+      <div className="space-y-6">
+        {/* Resolution Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="card lg:col-span-2">
+            <div className="card-header">
+              <h3 className="font-semibold flex items-center gap-2">
+                <Award className="w-4 h-4 text-green-600" /> Resolution Summary
+              </h3>
+            </div>
+            <div className="card-body space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Outcome</p>
+                  <p className="font-bold text-green-600 text-lg">WON</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Recovered Amount</p>
+                  <p className="font-bold text-green-600 text-lg">{formatCurrency(resolution.recoveredAmount || caseData.amount)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Resolved Date</p>
+                  <p className="font-medium">{formatDate(resolution.resolvedDate || caseData.resolvedAt)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Processor Response</p>
+                  <p className="font-medium">{resolution.processorResponseCode || 'REVERSED'}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm text-gray-500">Resolution Reason</p>
+                  <p className="font-medium text-gray-700">{resolution.reason}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="card">
+            <div className="card-header">
+              <h3 className="font-semibold flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-green-600" /> Recovery Details
+              </h3>
+            </div>
+            <div className="card-body space-y-4 text-center">
+              <div className="p-4 bg-green-50 rounded-xl">
+                <p className="text-3xl font-bold text-green-600">{formatCurrency(resolution.recoveredAmount || caseData.amount)}</p>
+                <p className="text-sm text-green-700 mt-1">Full Amount Recovered</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Original Dispute</p>
+                <p className="font-medium">{formatCurrency(caseData.amount)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Recovery Rate</p>
+                <p className="font-bold text-green-600">
+                  {Math.round(((resolution.recoveredAmount || caseData.amount) / caseData.amount) * 100)}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Win Factors */}
+        {resolution.winFactors?.length > 0 && (
+          <div className="card">
+            <div className="card-header">
+              <h3 className="font-semibold flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600" /> Winning Factors
+              </h3>
+            </div>
+            <div className="card-body">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {resolution.winFactors.map((factor, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-green-900">{factor}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Processor Notes */}
+        {resolution.processorNotes && (
+          <div className="card">
+            <div className="card-header">
+              <h3 className="font-semibold flex items-center gap-2">
+                <FileText className="w-4 h-4" /> Processor / Issuer Statement
+              </h3>
+            </div>
+            <div className="card-body">
+              <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-green-400">
+                <p className="text-sm text-gray-700 leading-relaxed">{resolution.processorNotes}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // LOST case display
+  return (
+    <div className="space-y-6">
+      {/* Denial Summary */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="card lg:col-span-2">
+          <div className="card-header">
+            <h3 className="font-semibold flex items-center gap-2">
+              <ShieldX className="w-4 h-4 text-red-600" /> Denial Summary
+            </h3>
+          </div>
+          <div className="card-body space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Outcome</p>
+                <p className="font-bold text-red-600 text-lg">LOST</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Denial Code</p>
+                <p className="font-medium text-red-600">{resolution.denialCode || 'N/A'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Resolved Date</p>
+                <p className="font-medium">{formatDate(resolution.resolvedDate || caseData.resolvedAt)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Processor Response</p>
+                <p className="font-medium">{resolution.processorResponseCode || 'UPHELD'}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-sm text-gray-500">Denial Reason</p>
+                <p className="font-medium text-gray-700">{resolution.reason}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Loss Details */}
+        <div className="card">
+          <div className="card-header">
+            <h3 className="font-semibold flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-red-600" /> Financial Impact
+            </h3>
+          </div>
+          <div className="card-body space-y-4 text-center">
+            <div className="p-4 bg-red-50 rounded-xl">
+              <p className="text-3xl font-bold text-red-600">{formatCurrency(caseData.amount)}</p>
+              <p className="text-sm text-red-700 mt-1">Amount Lost</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Recovered</p>
+              <p className="font-medium text-gray-400">{formatCurrency(resolution.recoveredAmount || 0)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Detailed Denial Explanation */}
+      {resolution.denialDetails && (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="font-semibold flex items-center gap-2">
+              <FileWarning className="w-4 h-4 text-red-500" /> Detailed Denial Explanation
+            </h3>
+          </div>
+          <div className="card-body">
+            <div className="bg-red-50 rounded-lg p-4 border-l-4 border-red-400">
+              <p className="text-sm text-gray-700 leading-relaxed">{resolution.denialDetails}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Evidence Gaps */}
+      {resolution.evidenceGaps?.length > 0 && (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-red-500" /> Evidence Gaps Identified
+            </h3>
+          </div>
+          <div className="card-body">
+            <p className="text-sm text-gray-500 mb-4">The following evidence was missing or insufficient, contributing to the denial:</p>
+            <div className="space-y-3">
+              {resolution.evidenceGaps.map((gap, index) => (
+                <div key={index} className="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
+                  <XCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-900">{gap}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Processor Notes */}
+      {resolution.processorNotes && (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="font-semibold flex items-center gap-2">
+              <FileText className="w-4 h-4" /> Processor / Issuer Statement
+            </h3>
+          </div>
+          <div className="card-body">
+            <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-red-400">
+              <p className="text-sm text-gray-700 leading-relaxed">{resolution.processorNotes}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Arbitration Section */}
+      {resolution.arbitration && (
+        <div className="card">
+          <div className="card-header">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Gavel className="w-4 h-4 text-amber-600" /> Arbitration
+            </h3>
+          </div>
+          <div className="card-body">
+            {resolution.arbitration.status === 'AVAILABLE' && resolution.arbitration.eligible && (
+              <div className="space-y-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      <Gavel className="w-6 h-6 text-amber-700" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-amber-900 mb-1">Arbitration Available</h4>
+                      <p className="text-sm text-amber-800 mb-3">
+                        You may file for arbitration to have the card network make a final binding decision on this dispute.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="bg-white rounded-lg p-3 border border-amber-200">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Filing Deadline</p>
+                          <p className="font-bold text-amber-900">
+                            {formatDate(resolution.arbitration.deadline)}
+                          </p>
+                          <p className="text-xs text-amber-700">
+                            {Math.max(0, Math.ceil((new Date(resolution.arbitration.deadline) - new Date()) / 86400000))} days remaining
+                          </p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-amber-200">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Filing Fee</p>
+                          <p className="font-bold text-amber-900">{formatCurrency(resolution.arbitration.fee)}</p>
+                          <p className="text-xs text-amber-700">Non-refundable if lost</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-3 border border-amber-200">
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Potential Recovery</p>
+                          <p className="font-bold text-green-600">{formatCurrency(caseData.amount)}</p>
+                          <p className="text-xs text-gray-500">Original dispute amount</p>
+                        </div>
+                      </div>
+                      {resolution.arbitration.instructions && (
+                        <p className="text-xs text-amber-700 mb-4">{resolution.arbitration.instructions}</p>
+                      )}
+                      <button
+                        onClick={() => setShowArbitrationModal(true)}
+                        className="btn-primary bg-amber-600 hover:bg-amber-700"
+                      >
+                        <Gavel className="w-4 h-4 mr-2" />
+                        File for Arbitration
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {resolution.arbitration.status === 'FILED' && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Scale className="w-6 h-6 text-blue-700" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-blue-900 mb-1">Arbitration Filed</h4>
+                    <p className="text-sm text-blue-800 mb-3">
+                      Your arbitration case has been filed and is pending review by the card network.
+                    </p>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div>
+                        <span className="text-gray-500">Filed: </span>
+                        <span className="font-medium">{formatDate(resolution.arbitration.filedDate)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Status: </span>
+                        <span className="font-medium text-blue-700">Pending Review</span>
+                      </div>
+                    </div>
+                    {/* Progress Tracker */}
+                    <div className="mt-4 flex items-center gap-2">
+                      {['Filed', 'Under Review', 'Decision'].map((step, i) => (
+                        <React.Fragment key={step}>
+                          <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${
+                            i === 0 ? 'bg-blue-200 text-blue-800' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {i === 0 ? <CheckCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                            {step}
+                          </div>
+                          {i < 2 && <ChevronRight className="w-4 h-4 text-gray-300" />}
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {new Date(resolution.arbitration.deadline) < new Date() && resolution.arbitration.status === 'AVAILABLE' && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-6 h-6 text-gray-400" />
+                  <div>
+                    <h4 className="font-medium text-gray-700">Arbitration Deadline Passed</h4>
+                    <p className="text-sm text-gray-500">
+                      The deadline to file for arbitration was {formatDate(resolution.arbitration.deadline)}. This option is no longer available.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Arbitration Modal */}
+      {showArbitrationModal && (
+        <ArbitrationModal
+          caseData={caseData}
+          caseId={caseId}
+          onClose={() => setShowArbitrationModal(false)}
+          onSuccess={() => {
+            setShowArbitrationModal(false);
+            onUpdate();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Arbitration Filing Modal Component
+function ArbitrationModal({ caseData, caseId, onClose, onSuccess }) {
+  const [step, setStep] = useState(1);
+  const [narrative, setNarrative] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const resolution = caseData.resolution;
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setSelectedFiles(prev => [...prev, ...Array.from(e.dataTransfer.files)]);
+    }
+  };
+
+  const handleFileInput = (e) => {
+    if (e.target.files) {
+      setSelectedFiles(prev => [...prev, ...Array.from(e.target.files)]);
+    }
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async () => {
+    if (!narrative.trim()) return;
+    setSubmitting(true);
+    try {
+      // Upload arbitration documents if any
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', 'ARBITRATION_DOCUMENT');
+        formData.append('description', 'Arbitration supporting document');
+        await api.upload(`/evidence/${caseId}/upload`, formData);
+      }
+
+      // File for arbitration
+      await api.post(`/cases/${caseId}/arbitration`, { narrative: narrative.trim() });
+      onSuccess();
+    } catch (err) {
+      alert('Failed to file arbitration: ' + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Gavel className="w-5 h-5 text-amber-700" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold">File for Arbitration</h2>
+                <p className="text-sm text-gray-500">{caseData.caseNumber} - {caseData.guestName}</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+              <XCircle className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Step Indicator */}
+          <div className="flex items-center gap-2 mt-4">
+            {['Review', 'Evidence & Narrative', 'Confirm'].map((label, i) => (
+              <React.Fragment key={label}>
+                <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  step === i + 1 ? 'bg-amber-100 text-amber-800' :
+                  step > i + 1 ? 'bg-green-100 text-green-700' :
+                  'bg-gray-100 text-gray-400'
+                }`}>
+                  {step > i + 1 ? <CheckCircle className="w-3.5 h-3.5" /> :
+                   <span className="w-4 h-4 rounded-full bg-current opacity-20 flex items-center justify-center text-[10px]">{i + 1}</span>}
+                  {label}
+                </div>
+                {i < 2 && <ChevronRight className="w-4 h-4 text-gray-300" />}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-6">
+          {/* Step 1: Review */}
+          {step === 1 && (
+            <div className="space-y-6">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h3 className="font-semibold text-amber-900 mb-2">Important Information</h3>
+                <ul className="text-sm text-amber-800 space-y-2">
+                  <li className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Arbitration is a <strong>final, binding decision</strong> by the card network ({caseData.cardBrand})</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <DollarSign className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Filing fee: <strong>{formatCurrency(resolution.arbitration?.fee || 500)}</strong> (non-refundable if you lose)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>Deadline: <strong>{formatDate(resolution.arbitration?.deadline)}</strong> ({Math.max(0, Math.ceil((new Date(resolution.arbitration?.deadline) - new Date()) / 86400000))} days remaining)</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 mb-1">Case</p>
+                  <p className="font-semibold">{caseData.caseNumber}</p>
+                  <p className="text-sm text-gray-600">{caseData.guestName}</p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 mb-1">Disputed Amount</p>
+                  <p className="font-semibold text-lg">{formatCurrency(caseData.amount)}</p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 mb-1">Reason Code</p>
+                  <p className="font-semibold">{caseData.reasonCode}</p>
+                  <p className="text-xs text-gray-500">{caseData.reasonDescription}</p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <p className="text-sm text-gray-500 mb-1">Denial Reason</p>
+                  <p className="font-medium text-sm text-red-700">{resolution.denialCode}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-medium text-gray-700 mb-2">Original Denial Statement</h4>
+                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200 text-sm text-gray-600 max-h-32 overflow-y-auto">
+                  {resolution.reason}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Evidence & Narrative */}
+          {step === 2 && (
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Arbitration Narrative <span className="text-red-500">*</span>
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  Explain why the dispute decision should be overturned. Include specific facts, evidence references, and applicable card network rules.
+                </p>
+                <textarea
+                  value={narrative}
+                  onChange={(e) => setNarrative(e.target.value)}
+                  placeholder="Example: We respectfully request arbitration based on the following grounds...&#10;&#10;1. The transaction was authorized by the cardholder who...&#10;2. Evidence demonstrates that...&#10;3. Under network rule XX.X, the merchant should not bear liability because..."
+                  rows={8}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm"
+                />
+                <p className="text-xs text-gray-400 mt-1">{narrative.length} characters</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional Supporting Documents (Optional)
+                </label>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                    dragActive ? 'border-amber-500 bg-amber-50' : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                >
+                  <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-600 mb-1">Drag and drop files or click to browse</p>
+                  <p className="text-xs text-gray-400">Upload any additional evidence not previously submitted</p>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.txt"
+                    onChange={handleFileInput}
+                    className="hidden"
+                    id="arb-file-upload"
+                  />
+                  <label htmlFor="arb-file-upload" className="btn-secondary mt-3 cursor-pointer text-sm">
+                    Browse Files
+                  </label>
+                </div>
+
+                {selectedFiles.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between bg-gray-50 rounded-lg p-2">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm truncate max-w-[250px]">{file.name}</span>
+                          <span className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)} KB</span>
+                        </div>
+                        <button onClick={() => removeFile(index)} className="text-red-500 hover:text-red-700">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Confirm */}
+          {step === 3 && (
+            <div className="space-y-6">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <h3 className="font-semibold text-amber-900 mb-3">Confirm Arbitration Filing</h3>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Case:</span>
+                    <span className="font-medium">{caseData.caseNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Guest:</span>
+                    <span className="font-medium">{caseData.guestName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Dispute Amount:</span>
+                    <span className="font-medium">{formatCurrency(caseData.amount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Filing Fee:</span>
+                    <span className="font-bold text-amber-800">{formatCurrency(resolution.arbitration?.fee || 500)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Supporting Documents:</span>
+                    <span className="font-medium">{selectedFiles.length} file{selectedFiles.length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="border-t border-amber-200 pt-3">
+                    <p className="text-gray-600 mb-1">Narrative Preview:</p>
+                    <div className="bg-white rounded-lg p-3 border border-amber-200 max-h-24 overflow-y-auto">
+                      <p className="text-xs text-gray-700">{narrative}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-red-800">
+                    <p className="font-medium mb-1">Please Note</p>
+                    <p>By filing for arbitration, the filing fee of {formatCurrency(resolution.arbitration?.fee || 500)} will be charged. This fee is <strong>non-refundable</strong> if the arbitration decision is not in your favor. The card network's decision is final and binding.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-6 border-t border-gray-200 flex justify-between">
+          <button
+            onClick={() => step === 1 ? onClose() : setStep(step - 1)}
+            className="btn-secondary"
+          >
+            {step === 1 ? 'Cancel' : 'Back'}
+          </button>
+
+          {step < 3 ? (
+            <button
+              onClick={() => setStep(step + 1)}
+              disabled={step === 2 && !narrative.trim()}
+              className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Continue <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="btn-primary bg-amber-600 hover:bg-amber-700"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Filing Arbitration...
+                </>
+              ) : (
+                <>
+                  <Gavel className="w-4 h-4 mr-2" />
+                  File Arbitration
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -763,6 +1517,7 @@ function EvidenceTab({ caseId, evidence, onUpdate }) {
     { value: 'DAMAGE_ASSESSMENT', label: 'Damage Assessment', icon: '📊' },
     { value: 'POLICE_REPORT', label: 'Police Report', icon: '👮' },
     { value: 'NO_SHOW_DOCUMENTATION', label: 'No Show Documentation', icon: '🚫' },
+    { value: 'ARBITRATION_DOCUMENT', label: 'Arbitration Document', icon: '⚖️' },
     { value: 'OTHER', label: 'Other Documents', icon: '📎' }
   ];
 

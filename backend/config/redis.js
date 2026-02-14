@@ -59,12 +59,18 @@ function getRedisClient() {
 async function connectRedis() {
   try {
     const client = getRedisClient();
-    await client.connect();
-    await client.ping();
+
+    // Add connection timeout to avoid hanging
+    const connectPromise = client.connect().then(() => client.ping());
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Redis connection timeout (5s)')), 5000)
+    );
+
+    await Promise.race([connectPromise, timeoutPromise]);
     logger.info('AccuDefend: Redis connection verified');
     return client;
   } catch (error) {
-    logger.error('Redis connection failed:', error);
+    logger.error('Redis connection failed:', error.message || error);
     throw error;
   }
 }

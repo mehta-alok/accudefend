@@ -124,7 +124,11 @@ frontend/
 │   ├── components/
 │   │   ├── Layout.jsx              # Main layout with sidebar & help integration
 │   │   ├── Tutorial.jsx            # Tutorial, HelpButton & HelpPanel components
-│   │   └── NotificationPanel.jsx   # Notification dropdown panel
+│   │   ├── NotificationPanel.jsx   # Notification dropdown panel
+│   │   ├── OutcomeTab.jsx          # Dispute outcome display (~250 lines)
+│   │   ├── ArbitrationModal.jsx    # 3-step arbitration filing modal (~250 lines)
+│   │   ├── ReservationViewer.jsx   # Reservation details viewer
+│   │   └── GuestFolioViewer.jsx    # Guest folio details viewer
 │   │
 │   ├── pages/
 │   │   ├── Login.jsx               # Authentication
@@ -381,6 +385,7 @@ enum EvidenceType {
   DAMAGE_PHOTOS           // Property damage evidence
   POLICE_REPORT           // Law enforcement docs
   NO_SHOW_DOCUMENTATION
+  ARBITRATION_DOCUMENT    // Arbitration filing evidence
   OTHER
 }
 
@@ -429,6 +434,7 @@ PATCH  /api/cases/:id               # Update case
 PATCH  /api/cases/:id/status        # Update case status
 POST   /api/cases/:id/analyze       # Trigger AI analysis
 POST   /api/cases/:id/notes         # Add case note
+POST   /api/cases/:id/arbitration   # File arbitration for a lost case
 ```
 
 ### 6.3 Evidence
@@ -619,6 +625,34 @@ const EVIDENCE_PACKETS = {
   }
 };
 ```
+
+### 7.4 Dispute Outcome & Arbitration Workflow
+
+When a case reaches a final resolution (WON or LOST), the system provides detailed outcome data and supports arbitration filing for lost cases.
+
+**Outcome Display (OutcomeTab component):**
+
+| Outcome | Data Displayed |
+|---------|---------------|
+| **WON** | Win factors, recovered amount, processor statement |
+| **LOST** | Denial reason, denial code, evidence gaps analysis |
+
+**Resolution Banners:**
+- Green banner for WON cases with recovery details
+- Red banner for LOST cases with denial summary
+- Auto-navigation to Outcome tab for resolved cases
+
+**Arbitration Workflow (ArbitrationModal component):**
+
+For LOST cases, staff can file arbitration through a 3-step modal:
+
+| Step | Name | Purpose |
+|------|------|---------|
+| 1 | Review | Review case details, denial reasons, and original evidence |
+| 2 | Evidence & Narrative | Upload additional ARBITRATION_DOCUMENT evidence and compose arbitration narrative |
+| 3 | Confirm | Review submission details and confirm arbitration filing |
+
+**API Endpoint:** `POST /api/cases/:id/arbitration`
 
 ---
 
@@ -1537,7 +1571,11 @@ accudefend/
 │   │   ├── components/
 │   │   │   ├── Layout.jsx              # Main layout with sidebar & nav
 │   │   │   ├── Tutorial.jsx            # Tutorial & Help system
-│   │   │   └── NotificationPanel.jsx   # Notification dropdown panel
+│   │   │   ├── NotificationPanel.jsx   # Notification dropdown panel
+│   │   │   ├── OutcomeTab.jsx          # Dispute outcome display
+│   │   │   ├── ArbitrationModal.jsx    # Arbitration filing modal
+│   │   │   ├── ReservationViewer.jsx   # Reservation details viewer
+│   │   │   └── GuestFolioViewer.jsx    # Guest folio details viewer
 │   │   ├── pages/
 │   │   │   ├── Login.jsx               # Authentication
 │   │   │   ├── Dashboard.jsx           # Main dashboard with metrics

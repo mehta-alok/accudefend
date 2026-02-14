@@ -182,6 +182,10 @@ frontend/
       Layout.jsx                # App shell: sidebar, header, content area
       NotificationPanel.jsx     # Dropdown notification panel
       Tutorial.jsx              # Tutorial overlay component
+      OutcomeTab.jsx            # Dispute outcome display (~250 lines) - WON/LOST resolution data
+      ArbitrationModal.jsx      # 3-step arbitration filing modal (~250 lines)
+      ReservationViewer.jsx     # Reservation details viewer
+      GuestFolioViewer.jsx      # Guest folio details viewer
     hooks/
       useAuth.jsx               # AuthContext + AuthProvider + useAuth hook
     utils/
@@ -209,13 +213,17 @@ frontend/
 | DisputeIntegration | `/disputes` | Dispute company management with Merlink 2-way sync |
 | Tutorial | `/tutorial` | Interactive help system |
 
-### Component Summary (3 components)
+### Component Summary (7 components)
 
 | Component | Description |
 |-----------|-------------|
 | Layout | App shell with collapsible sidebar, top header with notifications, and content area |
 | NotificationPanel | Real-time notification dropdown with mark-as-read, priority badges, and links |
 | Tutorial | Overlay tutorial system with keyboard shortcut `?` trigger and first-time auto-launch |
+| OutcomeTab | Dispute outcome display (~250 lines) showing WON/LOST resolution data, win factors, denial reasons, recovered amounts, and arbitration options |
+| ArbitrationModal | 3-step arbitration filing modal (~250 lines) with Review, Evidence & Narrative, and Confirm steps |
+| ReservationViewer | Reservation details viewer for displaying booking and stay information |
+| GuestFolioViewer | Guest folio viewer for displaying itemized charges and payment details |
 
 ### State Management
 
@@ -284,7 +292,7 @@ backend/
 | Route Module | Base Path | Key Endpoints |
 |-------------|-----------|---------------|
 | auth | `/api/auth` | POST `/login`, POST `/register`, POST `/refresh`, POST `/logout`, GET `/me` |
-| cases | `/api/cases` | GET `/`, POST `/`, GET `/:id`, PATCH `/:id`, POST `/:id/analyze`, POST `/:id/notes`, PATCH `/:id/status` |
+| cases | `/api/cases` | GET `/`, POST `/`, GET `/:id`, PATCH `/:id`, POST `/:id/analyze`, POST `/:id/notes`, PATCH `/:id/status`, POST `/:id/arbitration` |
 | evidence | `/api/evidence` | POST `/upload`, GET `/:id/download`, POST `/:id/verify`, DELETE `/:id` |
 | analytics | `/api/analytics` | GET `/dashboard`, GET `/trends`, GET `/by-reason`, GET `/by-property` |
 | admin | `/api/admin` | GET `/users`, GET `/properties`, GET `/providers`, GET `/config`, GET `/storage/status`, GET `/audit-log` |
@@ -357,6 +365,7 @@ enum EvidenceType {
   DAMAGE_ASSESSMENT
   POLICE_REPORT
   NO_SHOW_DOCUMENTATION
+  ARBITRATION_DOCUMENT
   OTHER
 }
 
@@ -1162,6 +1171,7 @@ PATCH  /api/cases/:id               # Update case fields
 PATCH  /api/cases/:id/status        # Update case status
 POST   /api/cases/:id/analyze       # Trigger AI analysis
 POST   /api/cases/:id/notes         # Add note to case
+POST   /api/cases/:id/arbitration   # File arbitration for a lost case
 ```
 
 ### Evidence Endpoints
