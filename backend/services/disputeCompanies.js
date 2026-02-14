@@ -10,12 +10,10 @@
  * - Ethoca (Mastercard)
  */
 
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
 const axios = require('axios');
-
-const prisma = new PrismaClient();
 
 // =============================================================================
 // DISPUTE COMPANY CONFIGURATIONS

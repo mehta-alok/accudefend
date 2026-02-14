@@ -4,11 +4,9 @@
  * Manages connections with payment processors, PMS systems, and other external services
  */
 
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
-
-const prisma = new PrismaClient();
 
 // =============================================================================
 // ENCRYPTION HELPERS

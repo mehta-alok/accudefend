@@ -1,18 +1,56 @@
 /**
  * AccuDefend System
  * Database Configuration (PostgreSQL via Prisma)
+ *
+ * Uses deferred loading to avoid Node.js v25 hanging on require('@prisma/client')
+ * PrismaClient is only loaded when connectDatabase() is called (during server startup).
+ * Before that, all prisma model access uses a proxy that throws — caught by demo fallbacks.
  */
 
-const { PrismaClient } = require('@prisma/client');
 const logger = require('../utils/logger');
 
 let prisma;
+let prismaReady = false;
 
 /**
- * Initialize Prisma client with connection pooling
+ * Create a proxy that defers all model access to the real PrismaClient
+ * or throws "database unavailable" errors (caught by demo mode fallbacks).
  */
-function getPrismaClient() {
-  if (!prisma) {
+function createDeferredProxy() {
+  return new Proxy({}, {
+    get: (target, prop) => {
+      // If prisma has been initialized by connectDatabase(), use it
+      if (prismaReady && prisma) {
+        return prisma[prop];
+      }
+      // Internal Prisma methods that may be called before connection
+      if (prop === '$connect') return async () => { throw new Error('Database unavailable (demo mode)'); };
+      if (prop === '$disconnect') return async () => {};
+      if (prop === '$queryRaw') return async () => { throw new Error('Database unavailable (demo mode)'); };
+      if (prop === '$on') return () => {};
+      if (prop === 'then') return undefined; // Prevent Promise-like behavior
+      if (typeof prop === 'symbol') return undefined;
+      // Model access (chargeback, notification, etc.) — return proxy that throws
+      return new Proxy({}, {
+        get: (_, method) => {
+          if (typeof method === 'symbol') return undefined;
+          return async () => { throw new Error('Database unavailable (demo mode)'); };
+        }
+      });
+    }
+  });
+}
+
+// Export a deferred proxy immediately — no @prisma/client loaded yet
+const deferredPrisma = createDeferredProxy();
+
+/**
+ * Connect to database and load PrismaClient
+ * Only called during server startup in startServer()
+ */
+async function connectDatabase() {
+  try {
+    const { PrismaClient } = require('@prisma/client');
     prisma = new PrismaClient({
       log: [
         { level: 'query', emit: 'event' },
@@ -33,20 +71,10 @@ function getPrismaClient() {
         logger.debug(`Duration: ${e.duration}ms`);
       });
     }
-  }
-  return prisma;
-}
-
-/**
- * Connect to database and verify connection
- */
-async function connectDatabase() {
-  try {
-    const client = getPrismaClient();
 
     // Add connection timeout (5 seconds) to avoid hanging when DB is unavailable
-    const connectPromise = client.$connect().then(() =>
-      client.$queryRaw`SELECT 1 as connected`
+    const connectPromise = prisma.$connect().then(() =>
+      prisma.$queryRaw`SELECT 1 as connected`
     );
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('Database connection timeout (5s)')), 5000)
@@ -54,8 +82,9 @@ async function connectDatabase() {
 
     await Promise.race([connectPromise, timeoutPromise]);
 
+    prismaReady = true;
     logger.info('AccuDefend: Database connection established');
-    return client;
+    return prisma;
   } catch (error) {
     logger.error('Database connection failed:', error.message || error);
     throw error;
@@ -73,8 +102,8 @@ async function disconnectDatabase() {
 }
 
 module.exports = {
-  prisma: getPrismaClient(),
-  getPrismaClient,
+  prisma: deferredPrisma,
+  getPrismaClient: () => deferredPrisma,
   connectDatabase,
   disconnectDatabase
 };

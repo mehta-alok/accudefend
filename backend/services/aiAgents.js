@@ -4,11 +4,9 @@
  * Manages AI agents that automate backlog management, code review, and other tasks
  */
 
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const logger = require('../utils/logger');
 const backlogService = require('./backlog');
-
-const prisma = new PrismaClient();
 
 // =============================================================================
 // AI AGENT CONFIGURATIONS

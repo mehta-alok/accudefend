@@ -4,10 +4,8 @@
  * Manages technical backlog items, epics, sprints, and dependencies
  */
 
-const { PrismaClient } = require('@prisma/client');
+const { prisma } = require('../config/database');
 const logger = require('../utils/logger');
-
-const prisma = new PrismaClient();
 
 // =============================================================================
 // BACKLOG SERVICE

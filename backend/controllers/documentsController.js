@@ -3,8 +3,7 @@
  * Documents Controller - Supporting Documents Management
  */
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { prisma } = require('../config/database');
 const storage = require('../config/storage');
 const logger = require('../utils/logger');
 const { v4: uuidv4 } = require('uuid');
