@@ -94,6 +94,7 @@ npm run dev
 | Dispute Adapter Views | ✅ | All 21 adapters visible (read-only) |
 | Analytics & Reports | ✅ | Mock trend data |
 | Dispute Outcomes | ✅ | WON/LOST resolution data, arbitration filing |
+| Reservations | ✅ | 10 demo reservations with folio items, stats, search, guest profiles |
 | Evidence Upload | ❌ | Requires S3 configuration |
 | Real-time Webhooks | ❌ | Requires external processor accounts |
 | Data Persistence | ❌ | Data resets on server restart |

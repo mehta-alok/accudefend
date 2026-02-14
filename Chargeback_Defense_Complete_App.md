@@ -78,7 +78,18 @@
 - Company CRUD operations
 - Sync status and history
 
-### 8. Tutorial Page (NEW)
+### 8. Reservations Page (NEW)
+
+- **ReservationViewer component** for browsing PMS-synced reservations with demo mode fallback
+- Stats bar showing: Total Synced, Linked to Chargebacks, Flagged Guests, Last Sync
+- Search and filter by guest name, confirmation number, status, date range
+- Inline expandable reservation detail with guest folio viewer (line items, charges, payments)
+- Linked chargeback cases displayed per reservation
+- Manual chargeback linking via `POST /api/reservations/:id/link-chargeback`
+- Real-time PMS search via `/api/reservations/search/live`
+- API endpoints with demo data fallback when database is unavailable
+
+### 9. Tutorial Page (NEW)
 
 - Dedicated tutorial walkthrough
 - 8-step guided onboarding:
@@ -91,7 +102,7 @@
   7. Configuration - Admin settings and thresholds
   8. Completion - Ready to use
 
-### 9. Notification Panel (NEW)
+### 10. Notification Panel (NEW)
 
 - Dropdown notification panel in header
 - Real-time alerts for new chargebacks, status changes
@@ -99,14 +110,14 @@
 - Mark all as read
 - Quick navigation to related cases
 
-### 10. Mobile Responsive
+### 11. Mobile Responsive
 
 - Hamburger menu for mobile navigation
 - Responsive grid layouts (Tailwind CSS breakpoints)
 - Touch-friendly buttons and interactions
 - Optimized for all screen sizes
 
-### 11. Dispute Outcome & Arbitration
+### 12. Dispute Outcome & Arbitration
 
 - **Outcome tracking** for resolved cases with WON/LOST resolution data
 - **WON cases display:** win factors contributing to the successful outcome, recovered amount, processor statement confirming reversal
@@ -122,7 +133,7 @@
   - ArbitrationModal (~250 lines) - 3-step modal wizard for filing arbitration
 - **Auto-navigation:** Resolved cases automatically navigate to the Outcome tab on load
 
-### 12. Interactive Features
+### 13. Interactive Features
 
 - Search cases by ID, guest name, or confirmation number
 - Filter by status, processor, date range

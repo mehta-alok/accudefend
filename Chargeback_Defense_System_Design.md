@@ -287,7 +287,7 @@ backend/
   uploads/                      # Local file upload directory (development)
 ```
 
-### Route Summary (9 route modules)
+### Route Summary (10 route modules)
 
 | Route Module | Base Path | Key Endpoints |
 |-------------|-----------|---------------|
@@ -300,6 +300,7 @@ backend/
 | disputes | `/api/disputes` | GET `/`, POST `/`, GET `/:id`, PATCH `/:id`, DELETE `/:id` |
 | notifications | `/api/notifications` | GET `/`, PATCH `/:id/read`, POST `/mark-all-read` |
 | pms | `/api/pms` | GET `/`, POST `/connect`, POST `/:id/sync`, DELETE `/:id/disconnect` |
+| reservations | `/api/reservations` | GET `/`, GET `/stats/summary`, GET `/:id`, GET `/:id/folio`, GET `/search/live`, POST `/:id/link-chargeback` |
 
 ### Service Summary (8 services)
 
@@ -1237,6 +1238,17 @@ GET    /api/pms                     # List available PMS systems
 POST   /api/pms/connect             # Connect to a PMS system
 POST   /api/pms/:id/sync            # Trigger sync with connected PMS
 DELETE /api/pms/:id/disconnect      # Disconnect PMS system
+```
+
+### Reservation Endpoints
+
+```
+GET    /api/reservations                  # List reservations (filters, pagination w/ totalPages, demo fallback)
+GET    /api/reservations/stats/summary    # Stats (totalReservations, linkedToChargebacks, flaggedGuests)
+GET    /api/reservations/:id              # Reservation detail with folio items and linked chargebacks
+GET    /api/reservations/:id/folio        # Guest folio with line items
+GET    /api/reservations/search/live      # Real-time PMS search
+POST   /api/reservations/:id/link-chargeback  # Manual chargeback linking
 ```
 
 ### Health Check Endpoints

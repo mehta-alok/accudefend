@@ -25,6 +25,7 @@
 - **Real-Time Dashboard** - Live metrics, trends, and case management
 - **Dispute Outcome Tracking** - Detailed resolution data for WON/LOST cases with win factors and denial analysis
 - **Arbitration Workflow** - 3-step arbitration filing with evidence upload and narrative submission
+- **Reservations Management** - PMS reservation lookup with demo data support (10 reservations across 4 PMS sources)
 - **Role-Based Access** - Property-level data isolation with RBAC
 - **Audit Trail** - Complete compliance logging for all actions
 - **Dispute & Chargeback Integration** - 21 adapters across card networks, processors, and third-party services
@@ -147,6 +148,7 @@ npm run dev
 - Dispute adapter status views
 - All 51 integration configurations visible
 - Dispute outcome details (WON/LOST resolution data, arbitration filing)
+- Reservations demo data (10 reservations with folio items, stats, search, guest profiles)
 
 ### Access Points
 

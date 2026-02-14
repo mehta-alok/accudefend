@@ -52,7 +52,7 @@ Hotels lose $5,000-$50,000+ annually to chargebacks due to:
 | Layer | Technology | Details |
 |-------|-----------|---------|
 | **Frontend** | React 18, Vite 5, Tailwind CSS 3 | 9 pages, 3 components |
-| **Backend** | Node.js 20, Express 4, Prisma 5 | 9 route files, 8 services |
+| **Backend** | Node.js 20, Express 4, Prisma 5 | 10 route files, 8 services |
 | **Database** | PostgreSQL 16 | Via Prisma ORM |
 | **Cache** | Redis 7 | Sessions, rate limiting |
 | **Storage** | AWS S3 | Evidence files with presigned URLs |
@@ -362,6 +362,16 @@ For lost cases eligible for arbitration:
 | POST | `/api/pms/:id/sync` | Trigger sync |
 | DELETE | `/api/pms/:id` | Disconnect PMS |
 
+### Reservations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/reservations` | List reservations with filters (10 demo reservations in demo mode) |
+| GET | `/api/reservations/stats/summary` | Reservation statistics |
+| GET | `/api/reservations/:id` | Reservation detail with folio |
+| POST | `/api/reservations/:id/link-chargeback` | Manual chargeback linking |
+
+> **Demo Mode:** Includes 10 realistic reservations across 4 PMS sources (Opera Cloud, Mews, Cloudbeds, Maestro) with full guest profiles, folios, and stay details.
+
 ---
 
 ## Project Structure
@@ -372,7 +382,7 @@ accudefend/
 │   ├── config/                # Database, Redis, S3 configuration
 │   ├── controllers/           # Document & notification handlers
 │   ├── middleware/            # JWT auth & RBAC
-│   ├── routes/                # 9 API route files
+│   ├── routes/                # 10 API route files
 │   ├── services/              # 8 business logic services
 │   ├── data/                  # Mock data for development
 │   ├── utils/                 # Logger, validators
@@ -515,6 +525,7 @@ accudefend/
 | 2.0 | February 2026 | Updated to reflect implemented system: added dispute integrations, notifications, 12+ PMS systems, full API endpoints, current tech stack (React 18, Node.js 20, PostgreSQL 16, Terraform IaC), cloud infrastructure details |
 | 3.0 | February 2026 | Expanded to 30 PMS systems (Enterprise, Boutique/Independent, Vacation Rental, Brand-Specific), 21 dispute/chargeback adapters with full two-way sync, 51 total integrations, brand-specific loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards) |
 | 4.0 | February 2026 | Added dispute outcome tracking (WON/LOST resolution data with win factors, denial codes, evidence gaps), arbitration workflow (3-step filing modal with evidence upload and narrative), OutcomeTab and ArbitrationModal components, auto-navigation to Outcome tab, resolution banners, new POST /api/cases/:id/arbitration endpoint |
+| 4.1 | February 2026 | Added reservations module: 4 new API endpoints (list, stats, detail, link-chargeback), 10 demo reservations across 4 PMS sources in demo mode, flattenReservation() normalization for frontend |
 
 ---
 

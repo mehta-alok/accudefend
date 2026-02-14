@@ -37,7 +37,7 @@
 
 **Layer 3: Business Logic**
 - Node.js 20 / Express 4 backend
-- 9 route handlers (auth, cases, evidence, analytics, admin, disputes, notifications, pms, webhooks)
+- 10 route handlers (auth, cases, evidence, analytics, admin, disputes, notifications, pms, reservations, webhooks)
 - Arbitration endpoint: `POST /api/cases/:id/arbitration` for filing arbitration on lost disputes
 - 8 service modules:
   - fraudDetection.js - AI confidence scoring engine
@@ -60,7 +60,7 @@
 - Property Management Systems: 30 PMS systems in 4 categories - Enterprise (15), Boutique/Independent (6), Vacation Rental (4), Brand-Specific (5 with loyalty programs including Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards)
 - Dispute/Chargeback Portals: 21 adapters - Prevention (3: Verifi, Ethoca, RDR), Card Networks (4: VROL, Mastercard Connect, Amex, Discover), Merchant Processors (9: Stripe, Adyen, Shift4, Elavon, Chase Paymentech, Worldpay, Global Payments, TSYS, First Data), Third-Party (5: Merlink, Chargebacks911, SERTIFI, Midigator, DisputeHelp)
 - All 51 integrations implement full two-way sync
-- Demo mode support: server starts gracefully without DB/Redis
+- Demo mode support: server starts gracefully without DB/Redis, includes 10 pre-loaded reservations across 4 PMS sources (Opera Cloud, Mews, Cloudbeds, Maestro)
 - AI Services: OpenAI, Anthropic APIs
 - Notification Services
 
@@ -262,7 +262,15 @@ PMS:
   POST   /api/pms/connect
   POST   /api/pms/:id/sync
   DELETE /api/pms/:id
+
+Reservations:
+  GET    /api/reservations              # List with filters (demo: 10 reservations)
+  GET    /api/reservations/stats/summary # Reservation statistics
+  GET    /api/reservations/:id          # Detail with folio
+  POST   /api/reservations/:id/link-chargeback  # Manual chargeback linking
 ```
+
+> **Data Normalization:** Reservation data from different PMS sources flows through `flattenReservation()` to normalize field names (e.g., `guest_name` / `guestName` / `GuestFullName` all map to `guestName`) before reaching the frontend.
 
 ---
 
@@ -329,6 +337,7 @@ PMS:
 | 1.0 | January 27, 2026 | Initial architecture and customer flow document |
 | 2.0 | February 2026 | Updated to reflect: current tech stack (React 18, Node.js 20, PostgreSQL 16), all 9 routes, 8 services, 2 controllers, dispute integration, notifications, 12+ PMS systems, Terraform IaC, multi-region AWS, Docker configs |
 | 3.0 | February 2026 | Expanded to 51 total integrations: 30 PMS systems (Enterprise 15, Boutique/Independent 6, Vacation Rental 4, Brand-Specific 5 with loyalty programs), 21 dispute/chargeback portal adapters (Prevention 3, Card Networks 4, Merchant Processors 9, Third-Party 5). All adapters implement full two-way sync. Added demo mode support. Brand-specific PMS adapters include loyalty integration. |
+| 3.1 | February 2026 | Added reservations API routes (list, stats, detail, link-chargeback), demo mode pre-loaded reservation data across 4 PMS sources, flattenReservation() data normalization documentation. |
 
 ---
 

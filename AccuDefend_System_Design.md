@@ -183,6 +183,7 @@ backend/
 │   ├── disputes.js             # Dispute company management
 │   ├── notifications.js        # Notification panel & alerts
 │   ├── pms.js                  # PMS system integration
+│   ├── reservations.js         # Reservation viewing, folio, chargeback linking (demo fallback)
 │   └── webhooks.js             # Payment processor webhooks (Stripe, Adyen, Shift4, Elavon)
 │
 ├── services/
@@ -506,7 +507,18 @@ POST   /api/pms/:id/sync            # Trigger PMS sync
 DELETE /api/pms/:id                 # Disconnect PMS
 ```
 
-### 6.10 API Response Format
+### 6.10 Reservations
+
+```
+GET    /api/reservations                  # List reservations (filters, pagination w/ totalPages, demo fallback)
+GET    /api/reservations/stats/summary    # Stats (totalReservations, linkedToChargebacks, flaggedGuests)
+GET    /api/reservations/:id              # Reservation detail with folio items and linked chargebacks
+GET    /api/reservations/:id/folio        # Guest folio with line items
+GET    /api/reservations/search/live      # Real-time PMS search
+POST   /api/reservations/:id/link-chargeback  # Manual chargeback linking
+```
+
+### 6.11 API Response Format
 
 ```json
 // Success Response
@@ -1617,6 +1629,7 @@ accudefend/
 │   │   ├── disputes.js                 # Dispute company management
 │   │   ├── notifications.js           # Notification panel & alerts
 │   │   ├── pms.js                      # PMS integration
+│   │   ├── reservations.js             # Reservation viewing, folio, chargeback linking
 │   │   └── webhooks.js                 # Payment webhooks
 │   ├── services/
 │   │   ├── fraudDetection.js           # AI fraud analysis engine
