@@ -1,6 +1,6 @@
 # AccuDefend - Complete System Design
 
-**Version:** 2.0
+**Version:** 3.0
 **Date:** February 2026
 **Document Type:** Technical Architecture Specification
 
@@ -109,7 +109,7 @@
 
 | Category | Technology | Version |
 |----------|-----------|---------|
-| Runtime | Node.js | 20.x LTS |
+| Runtime | Node.js | 20.x LTS / 25.5 |
 | Framework | Express.js | 4.18.x |
 | Language | JavaScript (CommonJS) | ES2022 |
 | ORM | Prisma | 5.8.x |
@@ -131,7 +131,7 @@
 | Env Config | dotenv | 16.3.1 |
 | CORS | cors | 2.8.5 |
 
-**Note:** The backend uses plain JavaScript (CommonJS modules), not TypeScript. There is no Bull Queue, no Kong API Gateway, and no mobile app backend. The server uses Express directly with Nginx as a reverse proxy in production.
+**Note:** The backend uses plain JavaScript (CommonJS modules), not TypeScript. There is no Bull Queue, no Kong API Gateway, and no mobile app backend. The server uses Express directly with Nginx as a reverse proxy in production. Compatible with Node.js v25.5 alongside Node.js 20 LTS.
 
 ### Dev Dependencies
 
@@ -178,6 +178,7 @@ frontend/
       PMSIntegration.jsx        # PMS system connections (30 systems)
       DisputeIntegration.jsx    # Dispute company integrations (Merlink)
       Tutorial.jsx              # Help/tutorial page
+      Reservations.jsx          # Reservation list and management
     components/
       Layout.jsx                # App shell: sidebar, header, content area
       NotificationPanel.jsx     # Dropdown notification panel
@@ -199,7 +200,7 @@ frontend/
   package.json                  # Frontend dependencies
 ```
 
-### Page Summary (9 pages)
+### Page Summary (10 pages)
 
 | Page | Route | Description |
 |------|-------|-------------|
@@ -212,6 +213,7 @@ frontend/
 | PMSIntegration | `/pms` | Connect/sync 30 PMS systems (Enterprise, Boutique, Vacation Rental, Brand-Specific) |
 | DisputeIntegration | `/disputes` | Dispute company management with Merlink 2-way sync |
 | Tutorial | `/tutorial` | Interactive help system |
+| Reservations | `/reservations` | Reservation list with search, filters, PMS linking, and chargeback association |
 
 ### Component Summary (7 components)
 
@@ -246,9 +248,8 @@ backend/
   .env.example                  # Environment variable template
   Dockerfile                    # Production Docker build
   Dockerfile.dev                # Development Docker build (nodemon hot-reload)
-  railway.json                  # Railway deployment config
   config/
-    database.js                 # Prisma client initialization
+    database.js                 # Prisma client initialization (deferred proxy pattern)
     redis.js                    # Redis (ioredis) connection + token blacklist
     s3.js                       # AWS S3 client configuration
     storage.js                  # File storage abstraction (local + S3)
@@ -264,6 +265,7 @@ backend/
     disputes.js                 # /api/disputes/* - Dispute company CRUD
     notifications.js            # /api/notifications/* - List, mark read
     pms.js                      # /api/pms/* - PMS list, connect, sync, disconnect
+    reservations.js             # /api/reservations/* - List, detail, folio, search, link
   services/
     fraudDetection.js           # AI confidence scoring and fraud analysis
     aiDefenseConfig.js          # AI defense strategy configuration
@@ -298,7 +300,7 @@ backend/
 | admin | `/api/admin` | GET `/users`, GET `/properties`, GET `/providers`, GET `/config`, GET `/storage/status`, GET `/audit-log` |
 | webhooks | `/api/webhooks` | POST `/stripe`, POST `/adyen`, POST `/shift4`, POST `/elavon` |
 | disputes | `/api/disputes` | GET `/`, POST `/`, GET `/:id`, PATCH `/:id`, DELETE `/:id` |
-| notifications | `/api/notifications` | GET `/`, PATCH `/:id/read`, POST `/mark-all-read` |
+| notifications | `/api/notifications` | GET `/`, PATCH `/:id/read`, POST `/read-all` |
 | pms | `/api/pms` | GET `/`, POST `/connect`, POST `/:id/sync`, DELETE `/:id/disconnect` |
 | reservations | `/api/reservations` | GET `/`, GET `/stats/summary`, GET `/:id`, GET `/:id/folio`, GET `/search/live`, POST `/:id/link-chargeback` |
 
@@ -329,6 +331,8 @@ backend/
 ### Prisma Schema Overview
 
 The database schema is defined in `backend/prisma/schema.prisma` using Prisma ORM with PostgreSQL 16.
+
+**Note:** The Prisma client uses a deferred proxy pattern (`config/database.js`), allowing the server to start and serve demo/health endpoints even when the database is unavailable. The actual Prisma connection is established lazily on first query rather than at module load time.
 
 #### Enums
 
@@ -1228,7 +1232,7 @@ DELETE /api/disputes/:id           # Remove dispute company
 ```
 GET    /api/notifications           # List user notifications
 PATCH  /api/notifications/:id/read  # Mark notification as read
-POST   /api/notifications/mark-all-read  # Mark all as read
+POST   /api/notifications/read-all       # Mark all as read
 ```
 
 ### PMS Integration Endpoints
@@ -1539,7 +1543,7 @@ TRIGGER: Guest files chargeback with bank
 |   - Historical win rate for similar cases   |
 |                                             |
 | TOTAL SCORE: 87/100                         |
-| THRESHOLD: 80 (met)                         |
+| THRESHOLD: 85 (met)                         |
 +------------+--------------------------------+
              |
              v
@@ -1567,7 +1571,7 @@ TRIGGER: Guest files chargeback with bank
 +---------------------------------------------+
 | T+2 min: Auto-Submit Decision Check         |
 |                                             |
-| IF (confidenceScore >= 80                   |
+| IF (confidenceScore >= 85                   |
 |     AND autoSubmitEnabled                   |
 |     AND daysRemaining >= 2)                 |
 | THEN:                                       |
@@ -1656,7 +1660,7 @@ RESULT: $487.50 recovered automatically
 |              MANUAL REVIEW WORKFLOW                            |
 +--------------------------------------------------------------+
 
-TRIGGER: Chargeback with confidence score < 80%
+TRIGGER: Chargeback with confidence score < 85%
          (e.g., missing checkout signature)
 
 +---------------------------------------------+
@@ -1681,7 +1685,7 @@ TRIGGER: Chargeback with confidence score < 80%
 | before submission.                          |
 |                                             |
 | Issue: Missing checkout signature           |
-| Confidence: 67% (below 80% threshold)      |
+| Confidence: 67% (below 85% threshold)      |
 |                                             |
 | [Review Case Now]                           |
 +------------+--------------------------------+
@@ -1838,31 +1842,31 @@ AccuDefend integrates with 30 Property Management Systems organized in 4 categor
 | PMS System | Auth Type | Key Evidence Types |
 |-----------|-----------|-------------------|
 | Oracle Opera Cloud | OAuth2 | Folio, registration card, payment receipt, guest signature, ID scan |
-| Mews Systems | API Key | Bill, registration, payment, customer profile |
+| Mews | API Key | Bill, registration, payment, customer profile |
 | Cloudbeds | OAuth2 | Reservation, guest info, payment info, invoice |
-| protel PMS | Basic Auth | Booking confirmation, invoice, guest registration, payment log |
-| StayNTouch | OAuth2 | Folio, reservation, payment record, guest signature |
-| Apaleo | OAuth2 | Reservation, folio, invoice, payment |
-| Maestro PMS | OAuth2 | Folio, registration, payment, guest profile |
-| SynXis Property Hub | OAuth2 | Reservation, folio, payment, guest data |
-| OPERA Cloud (Simphony) | OAuth2 | POS charges, folio, payment receipt |
-| Infor HMS | API Key | Folio, registration, payment, guest history |
-| Galaxy Lightspeed | API Key | Reservation, folio, payment, guest card |
-| Visual Matrix | Basic Auth | Folio, registration card, payment receipt |
-| ResNexus | API Key | Booking, payment receipt, guest info |
+| AutoClerk | API Key | Folio, registration card, payment receipt, guest signature, ID scan, audit trail |
+| Agilysys | OAuth2 | Folio, reservation, payment record, guest profile |
+| Infor | API Key | Folio, registration, payment, guest history |
+| Stayntouch | OAuth2 | Folio, reservation, payment record, guest signature |
+| RoomKey | API Key | Reservation, guest card, billing statement |
+| Maestro | OAuth2 | Folio, registration, payment, guest profile |
 | Hotelogix | API Key | Folio, reservation, payment, guest profile |
-| eZee Absolute | API Key | Reservation, folio, invoice, payment log |
+| RMS Cloud | API Key | Reservation, folio, invoice, payment, guest data |
+| Protel | Basic Auth | Booking confirmation, invoice, guest registration, payment log |
+| eZee | API Key | Reservation, folio, invoice, payment log |
+| SIHOT | OAuth2 | Folio, reservation, payment receipt, guest profile |
+| innRoad | OAuth2 | Reservation, folio, payment receipt, guest info |
 
 **Boutique/Independent PMS (6 systems):**
 
 | PMS System | Auth Type | Key Evidence Types |
 |-----------|-----------|-------------------|
-| AutoClerk PMS | API Key | Folio, registration card, payment receipt, guest signature, ID scan, audit trail |
-| innRoad | OAuth2 | Reservation, folio, payment receipt, guest info |
+| Apaleo | OAuth2 | Reservation, folio, invoice, payment |
 | WebRezPro | API Key | Booking, folio, payment receipt, registration |
 | RoomMaster | Basic Auth | Folio, registration card, payment receipt, reservation |
 | Little Hotelier | API Key | Booking, payment receipt, guest info |
-| RoomKeyPMS | API Key | Reservation, guest card, billing statement |
+| Visual Matrix | Basic Auth | Folio, registration card, payment receipt |
+| ResNexus | API Key | Booking, payment receipt, guest info |
 
 **Vacation Rental PMS (4 systems):**
 
@@ -1960,42 +1964,42 @@ AccuDefend integrates with 21 dispute/chargeback portals through dedicated adapt
 
 | Portal | Capabilities |
 |--------|-------------|
-| Verifi (Visa) | CDRN alerts, real-time prevention, resolution |
+| Verifi (Visa CDRN/RDR) | CDRN alerts, real-time prevention, rapid dispute resolution |
 | Ethoca (Mastercard) | Alert-based prevention, consumer clarity |
-| RDR (Rapid Dispute Resolution) | Automated resolution, pre-dispute deflection |
+| Merlink | Full 2-way sync, case management, evidence packets |
 
 **Card Network Portals (4 adapters):**
 
 | Portal | Capabilities |
 |--------|-------------|
-| Visa Resolve Online (VROL) | Dispute management, evidence submission, status tracking |
-| Mastercard Connect | Chargeback filing, pre-arbitration, retrieval requests |
-| Amex Dispute Center | Inquiry response, chargeback defense, evidence upload |
-| Discover eDisputes | Dispute response, evidence submission, case tracking |
+| Visa VROL | Dispute management, evidence submission, status tracking |
+| Mastercom | Chargeback filing, pre-arbitration, retrieval requests |
+| AMEX Merchant | Inquiry response, chargeback defense, evidence upload |
+| Discover Dispute | Dispute response, evidence submission, case tracking |
 
 **Merchant Processor Portals (9 adapters):**
 
 | Portal | Capabilities |
 |--------|-------------|
-| Stripe Disputes Dashboard | Webhook disputes, evidence submission, auto-sync |
-| Adyen Dispute Management | Chargeback notifications, defense filing |
-| Shift4 Disputes | Dispute events, evidence upload, status tracking |
-| Elavon Chargeback Manager | Chargeback notifications, representment |
-| Chase Paymentech Disputes | Dispute management, evidence submission |
-| Worldpay Dispute Resolution | Chargeback defense, evidence filing |
-| Global Payments Disputes | Dispute tracking, evidence upload |
-| TSYS Dispute Manager | Chargeback management, representment filing |
-| First Data Disputes | Dispute response, evidence submission |
+| Elavon | Chargeback notifications, representment |
+| Fiserv | Dispute management, evidence submission, status tracking |
+| Worldpay | Chargeback defense, evidence filing |
+| Chase Merchant | Dispute management, evidence submission |
+| Global Payments | Dispute tracking, evidence upload |
+| TSYS | Chargeback management, representment filing |
+| Square | Dispute events, evidence upload, status tracking |
+| Stripe | Webhook disputes, evidence submission, auto-sync |
+| Authorize.net | Dispute response, evidence submission |
 
 **Third-Party Dispute Services (5 adapters):**
 
 | Portal | Capabilities |
 |--------|-------------|
-| Merlink | Full 2-way sync, case management, evidence packets |
 | Chargebacks911 | Dispute management, prevention, analytics |
-| SERTIFI | Authorization capture, digital signatures, evidence |
+| Kount | Fraud prevention, risk assessment, dispute intelligence |
 | Midigator | Dispute intelligence, prevention alerts, analytics |
-| DisputeHelp | Case management, evidence compilation, submission |
+| Signifyd | Guaranteed fraud protection, chargeback recovery |
+| Riskified | AI-driven fraud prevention, chargeback guarantee |
 
 **Two-Way Sync Pattern (all 21 adapters):**
 - Outbound: AccuDefend pushes case data, evidence packets, and submission status
@@ -2298,7 +2302,7 @@ The infrastructure is defined in `infrastructure/aws/`:
 
 | File | Purpose |
 |------|---------|
-| `backend/Dockerfile` | Production backend image (Node.js 20 Alpine) |
+| `backend/Dockerfile` | Production backend image (Node.js 20/25.5 Alpine) |
 | `backend/Dockerfile.dev` | Development backend with nodemon hot-reload |
 | `frontend/Dockerfile` | Production frontend (multi-stage: Vite build + Nginx) |
 | `docker-compose.yml` | Production orchestration (API + Frontend + PostgreSQL + Redis) |
@@ -2467,13 +2471,13 @@ production:
    - Added actual package versions from package.json files (jsonwebtoken 9.0.2, bcryptjs 2.4.3, Zod 3.22.4, Winston 3.11.0, Multer 1.4.5, etc.)
 
 3. **Frontend Architecture:**
-   - Documented actual 9-page structure: Login, Dashboard, Cases, CaseDetail, Analytics, Settings, PMSIntegration, DisputeIntegration, Tutorial
-   - Documented 3 components: Layout, NotificationPanel, Tutorial
+   - Documented actual 9-page structure: Login, Dashboard, Cases, CaseDetail, Analytics, Settings, PMSIntegration, DisputeIntegration, Tutorial (expanded to 10 pages in v3.0)
+   - Documented 3 components: Layout, NotificationPanel, Tutorial (expanded to 7 components in v3.0)
    - Documented hooks (useAuth.jsx) and utils (api.js, helpers.js)
    - Added Recharts, date-fns, clsx as actual dependencies
 
 4. **Backend Architecture:**
-   - Documented actual 9 route modules: auth, cases, evidence, analytics, admin, webhooks, disputes, notifications, pms
+   - Documented actual 9 route modules: auth, cases, evidence, analytics, admin, webhooks, disputes, notifications, pms (expanded to 10 in v3.0)
    - Documented 8 services: fraudDetection, aiDefenseConfig, aiAgents, backlog, integrations, pmsIntegration, pmsSyncService, disputeCompanies
    - Documented 2 controllers: documentsController, notificationsController
    - Documented config modules: database, redis, s3, storage
@@ -2496,11 +2500,11 @@ production:
 
 7. **PMS Integrations Expanded:**
    - Expanded from 3 systems (Opera, Mews, Cloudbeds) to 30 PMS systems in 4 categories
-   - Enterprise (15): Oracle Opera Cloud, Mews, Cloudbeds, protel, StayNTouch, Apaleo, Maestro, SynXis, OPERA Cloud Simphony, Infor HMS, Galaxy Lightspeed, Visual Matrix, ResNexus, Hotelogix, eZee Absolute
-   - Boutique/Independent (6): AutoClerk, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS
+   - Enterprise (15): Oracle Opera Cloud, Mews, Cloudbeds, AutoClerk, Agilysys, Infor, Stayntouch, RoomKey, Maestro, Hotelogix, RMS Cloud, Protel, eZee, SIHOT, innRoad
+   - Boutique/Independent (6): Apaleo, WebRezPro, RoomMaster, Little Hotelier, Visual Matrix, ResNexus
    - Vacation Rental (4): Guesty, Hostaway, Lodgify, Escapia
    - Brand-Specific (5): Marriott FOSSE/MARSHA, Hilton OnQ, Hyatt OPERA, IHG Concerto, Best Western Central (with loyalty program integration)
-   - Added 21 dispute/chargeback portal adapters: Prevention (3), Card Networks (4), Merchant Processors (9), Third-Party (5)
+   - Added 21 dispute/chargeback portal adapters: Prevention (3), Card Networks (4), Merchant Processors (9), Third-Party (5) (names standardized in v3.0)
    - All 51 adapters implement full two-way sync
    - Brand-specific PMS adapters include loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards)
    - Demo mode support: server starts gracefully without DB/Redis
@@ -2534,3 +2538,36 @@ production:
 12. **Code Examples:**
     - Updated all code examples from TypeScript to JavaScript to match actual codebase
     - Updated interface patterns to JavaScript class patterns
+
+### Version 3.0 (February 2026)
+
+**Major changes from Version 2.0:**
+
+Node.js v25.5 compatibility, standardized PMS/adapter names, 7 components, 10 pages, 8 AI agents, deferred Prisma proxy.
+
+1. **Node.js v25.5 Compatibility:** Added Node.js v25.5 support alongside Node.js 20 LTS across backend stack, Docker configuration, and deployment pipeline.
+
+2. **Frontend Architecture:**
+   - Expanded from 9 pages to 10 pages (added Reservations.jsx page)
+   - All 7 components now documented: Layout, Tutorial, NotificationPanel, OutcomeTab, ArbitrationModal, ReservationViewer, GuestFolioViewer
+
+3. **Backend Architecture:**
+   - Expanded from 9 to 10 route modules (added reservations.js)
+   - 2 controllers documented: documentsController.js, notificationsController.js
+   - Removed legacy railway.json from directory listing
+
+4. **Auto-Submit Threshold:** Changed from 80% (`confidenceScore >= 80`) to 85% (`confidenceScore >= 85`) for consistency across all documentation.
+
+5. **PMS System Names Standardized:** Enterprise (15) names standardized to: Oracle Opera Cloud, Mews, Cloudbeds, AutoClerk, Agilysys, Infor, Stayntouch, RoomKey, Maestro, Hotelogix, RMS Cloud, Protel, eZee, SIHOT, innRoad.
+
+6. **Dispute Adapter Names Standardized:**
+   - Prevention (3): Verifi (Visa CDRN/RDR), Ethoca (Mastercard), Merlink
+   - Card Networks (4): Visa VROL, Mastercom, AMEX Merchant, Discover Dispute
+   - Merchant Processors (9): Elavon, Fiserv, Worldpay, Chase Merchant, Global Payments, TSYS, Square, Stripe, Authorize.net
+   - Third-Party (5): Chargebacks911, Kount, Midigator, Signifyd, Riskified
+
+7. **Notifications Endpoint:** Standardized to `POST /api/notifications/read-all` (was `POST /api/notifications/mark-all-read`).
+
+8. **Database Configuration:** Added note about deferred Prisma proxy pattern enabling graceful server startup without database connectivity.
+
+9. **AI Agents:** Confirmed 8 agent types documented: Backlog Manager, Code Reviewer, Documentation Agent, Test Generator, Security Scanner, Performance Monitor, Dispute Analyzer, Evidence Processor.

@@ -1,6 +1,6 @@
 # AccuDefend - Complete Application Overview
 
-**Version:** 2.0
+**Version:** 3.0
 **Last Updated:** February 2026
 **Platform:** AccuDefend (formerly Chargeback Defense OMNI)
 
@@ -32,7 +32,7 @@
 
 - Case status distribution with progress bars
 - Performance metrics: Win Rate, Avg Confidence, Total Recovered
-- Payment processor breakdown (Stripe, Adyen, Shift4, Elavon)
+- 4 payment processor webhook endpoints (Stripe, Adyen, Shift4, Elavon)
 - Win rate by reason code analysis
 - Property comparison (multi-property)
 - Historical trends with date range filtering
@@ -66,15 +66,24 @@
 
 ### 6. PMS Integration Page (NEW)
 
-- Connect/disconnect 12+ PMS systems
+- Connect/disconnect 30 PMS systems across 4 categories
 - Connection status monitoring
 - Sync triggers and history
-- Supported systems: Oracle Opera Cloud, Mews, AutoClerk, Cloudbeds, protel, StayNTouch, Apaleo, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS
+- Supported systems by category:
+  - **Enterprise (15):** Oracle Opera Cloud, Mews, Cloudbeds, AutoClerk, Agilysys, Infor, Stayntouch, RoomKey, Maestro, Hotelogix, RMS Cloud, Protel, eZee, SIHOT, innRoad
+  - **Boutique/Independent (6)**
+  - **Vacation Rental (4)**
+  - **Brand-Specific (5)**
 
 ### 7. Dispute Integration Page (NEW)
 
 - Dispute company management
-- Merlink 2-way sync configuration
+- 21 dispute adapters across 4 categories with full two-way sync:
+  - **Prevention Networks (3)**
+  - **Card Network Portals (4)**
+  - **Merchant Processor Portals (9)**
+  - **Third-Party Services (5)**
+- All 21 adapters with full two-way sync
 - Company CRUD operations
 - Sync status and history
 
@@ -197,6 +206,7 @@ frontend/src/
 |---------|------|---------|
 | 1.0 | January 2026 | Initial application overview |
 | 2.0 | February 2026 | Updated to include: PMS Integration page, Dispute Integration page, Tutorial page, NotificationPanel component, helpers.js utility, 12+ PMS systems, Merlink sync, current tech stack |
+| 3.0 | February 2026 | Updated PMS to 30 systems, dispute adapters to 21, standardized names, 7 frontend components, Node.js v25 compatibility |
 
 ---
 

@@ -1,11 +1,11 @@
 # Competitive Analysis - AccuDefend
 
-**Version:** 3.0
+**Version:** 4.0
 **Analysis Period:** Q4 2025 - Q1 2026
-**Last Updated:** February 13, 2026
+**Last Updated:** February 14, 2026
 **Next Review:** May 13, 2026 (quarterly update)
 **Owner:** Aalok Mehta
-**Status:** Updated to reflect current implementation state
+**Status:** v4.0 -- Updated route count, standardized PMS/adapter names, Node.js v25 compatibility
 
 ---
 
@@ -16,6 +16,7 @@
 | 1.0 | January 28, 2026 | Aalok Mehta | Initial competitive analysis and SWOT |
 | 2.0 | February 13, 2026 | Aalok Mehta | Renamed product to AccuDefend. Updated tech stack to actual implementation (React 18/Vite 5/Tailwind, Node.js 20/Express 4/Prisma 5, PostgreSQL 16/Redis 7, AWS ECS Fargate/Aurora/Terraform IaC). Updated PMS integrations from 2-3 planned to 12 implemented. Updated payment processors to 4 (Stripe, Adyen, Shift4, Elavon) with real-time webhooks. Added dispute company integrations (Merlink 2-way sync). Updated feature comparison to reflect 9 frontend pages, 9 API route files, 8 service modules, 2 controllers, Docker containerization, JWT auth with refresh tokens. Updated SWOT to reflect current state: removed mobile app claim (web-only), added dispute company integration as opportunity, noted actual implemented features in strengths. |
 | 3.0 | February 13, 2026 | Aalok Mehta | Expanded PMS integrations from 12 to 30 systems across 4 categories (Enterprise 15, Boutique/Independent 6, Vacation Rental 4, Brand-Specific 5). Added 21 dispute/chargeback adapters with full two-way sync (Prevention 3, Card Networks 4, Merchant Processors 9, Third-Party 5). Total integrations now 51. Added brand-specific loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards). Updated all competitive analysis sections, feature matrix, SWOT, and key takeaways to reflect expanded platform. |
+| 4.0 | February 14, 2026 | Aalok Mehta | Updated route count to 10, standardized PMS/adapter names, Node.js v25 compatibility noted |
 
 ---
 
@@ -550,29 +551,29 @@ AccuDefend currently supports 30 PMS integrations across 4 categories, far excee
 | 1 | Oracle Opera Cloud | Enterprise, chains | Implemented |
 | 2 | Mews | Boutique, independent (Europe) | Implemented |
 | 3 | Cloudbeds | Independent, hostels, vacation rentals | Implemented |
-| 4 | protel | European hotels, chains | Implemented |
-| 5 | Maestro | Independent, resorts | Implemented |
-| 6 | RoomMaster | Independent, small chains | Implemented |
-| 7 | Hotelogix | Mid-size, chains | Implemented |
-| 8 | Shiji | Enterprise, Asia-Pacific | Implemented |
-| 9 | Infor HMS | Large properties, resorts | Implemented |
-| 10 | OPERA 5 (On-Prem) | Legacy enterprise | Implemented |
-| 11 | Lightspeed | Hospitality + POS | Implemented |
-| 12 | Resort Manager | Resorts, timeshare | Implemented |
-| 13 | Clock PMS+ | Mid-size, European | Implemented |
-| 14 | eZee | Budget, mid-size | Implemented |
-| 15 | Visual Matrix | Independent, mid-size | Implemented |
+| 4 | AutoClerk | Independent, small chains (US-focused) | Implemented |
+| 5 | Agilysys | Enterprise, resorts, gaming | Implemented |
+| 6 | Infor | Large properties, resorts | Implemented |
+| 7 | Stayntouch | Cloud-native, modern properties | Implemented |
+| 8 | RoomKey | Independent hotels | Implemented |
+| 9 | Maestro | Independent, resorts | Implemented |
+| 10 | Hotelogix | Mid-size, chains | Implemented |
+| 11 | RMS Cloud | Multi-property, resorts | Implemented |
+| 12 | Protel | European hotels, chains | Implemented |
+| 13 | eZee | Budget, mid-size | Implemented |
+| 14 | SIHOT | Enterprise, European | Implemented |
+| 15 | innRoad | Small independent hotels | Implemented |
 
 #### Boutique/Independent PMS (6 Systems)
 
 | # | PMS System | Market Segment | Status |
 |---|-----------|----------------|--------|
-| 16 | StayNTouch | Boutique, lifestyle hotels | Implemented |
-| 17 | Apaleo | Modern, tech-forward properties | Implemented |
-| 18 | innRoad | Small independent hotels | Implemented |
-| 19 | WebRezPro | Independent, boutique hotels | Implemented |
-| 20 | Little Hotelier | Small B&Bs, guest houses | Implemented |
-| 21 | RoomKeyPMS | Independent hotels | Implemented |
+| 16 | Little Hotelier | Small B&Bs, guest houses | Implemented |
+| 17 | Frontdesk Anywhere | Boutique, lifestyle hotels | Implemented |
+| 18 | WebRezPro | Independent, boutique hotels | Implemented |
+| 19 | ThinkReservations | B&Bs, inns, boutique hotels | Implemented |
+| 20 | ResNexus | Independent, small properties | Implemented |
+| 21 | Guestline | European boutique, independent | Implemented |
 
 #### Vacation Rental PMS (4 Systems)
 
@@ -581,17 +582,17 @@ AccuDefend currently supports 30 PMS integrations across 4 categories, far excee
 | 22 | Guesty | Vacation rentals, property managers | Implemented |
 | 23 | Hostaway | Vacation rentals, short-term | Implemented |
 | 24 | Lodgify | Vacation rentals, direct booking | Implemented |
-| 25 | Streamline | Vacation rentals, resorts | Implemented |
+| 25 | Escapia | Vacation rentals, resorts | Implemented |
 
 #### Brand-Specific PMS (5 Systems)
 
 | # | PMS System | Market Segment | Status |
 |---|-----------|----------------|--------|
-| 26 | Marriott FOSSE/FSPMS | Marriott properties | Implemented |
+| 26 | Marriott GXP | Marriott properties | Implemented |
 | 27 | Hilton OnQ | Hilton properties | Implemented |
-| 28 | IHG Concerto | IHG properties | Implemented |
-| 29 | Wyndham PMS | Wyndham properties | Implemented |
-| 30 | Choice Advantage | Choice Hotels properties | Implemented |
+| 28 | Hyatt Opera | Hyatt properties | Implemented |
+| 29 | IHG Concerto | IHG properties | Implemented |
+| 30 | Best Western | Best Western properties | Implemented |
 
 **Brand-Specific Loyalty Integration:** Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards
 
@@ -815,7 +816,8 @@ Others:         ================             16%
 | Layer | Components | Count |
 |-------|-----------|-------|
 | **Frontend Pages** | Dashboard, Cases, CaseDetail, Analytics, Settings, PMSIntegration, DisputeIntegration, Tutorial, Login | 9 |
-| **API Route Files** | cases, auth, analytics, evidence, pms, admin, notifications, disputes, webhooks | 9 |
+| **Frontend Components** | Shared UI components (charts, tables, forms, modals, notifications, sidebar, header) | 7 |
+| **API Route Files** | cases, auth, analytics, evidence, pms, admin, notifications, disputes, webhooks, reservations | 10 |
 | **Service Modules** | fraudDetection, aiAgents, backlog, pmsIntegration, pmsSyncService, integrations, aiDefenseConfig, disputeCompanies | 8 |
 | **Controllers** | documentsController, notificationsController | 2 |
 
@@ -874,7 +876,7 @@ Others:         ================             16%
 - By the time chargeback arrives (30-90 days later), evidence is lost
 - AccuDefend captures evidence proactively across all major PMS platforms
 - Competitors rely on hotels to have saved documents
-- Brand-specific PMS integrations (Marriott FOSSE, Hilton OnQ, IHG Concerto, Wyndham, Choice) open the enterprise chain market
+- Brand-specific PMS integrations (Marriott GXP, Hilton OnQ, Hyatt Opera, IHG Concerto, Best Western) open the enterprise chain market
 - 21 dispute adapters ensure coverage across all card networks, processors, and third-party services
 
 #### 3. Multi-Processor Support with Real-Time Webhooks
@@ -941,6 +943,17 @@ Others:         ================             16%
 - Predictable costs
 - No surprises
 - Scales with business growth
+
+#### 9. Node.js v25 Compatibility with Deferred Prisma Loading Pattern
+
+**Competitors:** Tied to older runtimes, slower to adopt modern Node.js features
+**AccuDefend:** Full Node.js v25 compatibility using deferred Prisma loading pattern for optimal startup performance
+
+**Why It Matters:**
+- Leverages latest Node.js v25 performance improvements and security patches
+- Deferred Prisma loading pattern avoids startup penalties and enables graceful degradation
+- Future-proof architecture that stays ahead of runtime evolution
+- Cross-platform compatibility ensures deployment flexibility
 
 ---
 
@@ -1022,7 +1035,7 @@ Others:         ================             16%
 **Mitigation:** Focus on most common processors (covers 90%+ of hotels), add processors based on demand, 4 processors is sufficient for MVP validation
 
 #### 4. Web-Only (No Mobile App Yet)
-**Issue:** Currently a web application only; no native mobile apps for iOS or Android
+**Issue:** Currently a web application only (Node.js v25.5 compatible, cross-platform via browser); no native mobile apps for iOS or Android
 **Impact:** Some front-desk evidence collection workflows would benefit from mobile-native features (camera access, offline mode)
 **Mitigation:** Responsive web design works on mobile browsers, native mobile app is on the product roadmap, web-first approach allows faster iteration on core features
 
@@ -1177,6 +1190,7 @@ Others:         ================             16%
 - Comprehensive audit trail
 - Docker containerization with dev and prod configurations
 - Technical backlog system with AI agent support
+- Node.js v25 compatibility with deferred Prisma loading pattern
 
 ### Weaknesses
 
@@ -1185,7 +1199,7 @@ Others:         ================             16%
 - Limited processor network (4 vs. Chargebacks911's 100+)
 - Small team initially
 - US-only at launch
-- Web application only -- no native mobile apps (iOS/Android not yet built)
+- Web application only (Node.js v25.5 compatible, cross-platform via browser) -- no native mobile apps (iOS/Android not yet built)
 - Dependency on third-party APIs (processor and PMS)
 
 ### Opportunities
@@ -1294,8 +1308,8 @@ Others:         ================             16%
 
 ---
 
-**Document Version:** 3.0
-**Last Updated:** February 13, 2026
+**Document Version:** 4.0
+**Last Updated:** February 14, 2026
 **Next Review:** May 13, 2026 (quarterly update)
 **Owner:** Aalok Mehta
-**Status:** Updated to reflect 51 total integrations (30 PMS + 21 dispute adapters) with full two-way sync
+**Status:** Updated to reflect 10 API routes, standardized PMS/adapter names, Node.js v25 compatibility, 51 total integrations

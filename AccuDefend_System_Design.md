@@ -2,7 +2,7 @@
 
 ## AI-Powered Chargeback Defense Platform
 
-**Version:** 1.0.0
+**Version:** 2.0.0
 **Last Updated:** February 2026
 **Document Type:** Technical Architecture & System Design
 
@@ -162,7 +162,7 @@ backend/
 ├── server.js                   # Express app entry point
 │
 ├── config/
-│   ├── database.js             # Prisma client setup
+│   ├── database.js             # Prisma client setup (deferred Proxy pattern for Node.js v25 compatibility)
 │   ├── redis.js                # Redis connection & session management
 │   ├── s3.js                   # AWS S3 configuration
 │   └── storage.js              # Storage abstraction layer
@@ -265,7 +265,7 @@ backend/
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Node.js | 20.x | Runtime |
+| Node.js | 20+/25.5 | Runtime |
 | Express.js | 4.x | Web framework |
 | Prisma | 5.x | ORM |
 | PostgreSQL | 16.x | Database |
@@ -511,11 +511,11 @@ DELETE /api/pms/:id                 # Disconnect PMS
 
 ```
 GET    /api/reservations                  # List reservations (filters, pagination w/ totalPages, demo fallback)
+GET    /api/reservations/:id              # Get reservation details with folio items and linked chargebacks
+GET    /api/reservations/search           # Search reservations (real-time PMS search)
+GET    /api/reservations/:id/folio        # Get guest folio with line items
+POST   /api/reservations/:id/link         # Link reservation to chargeback case
 GET    /api/reservations/stats/summary    # Stats (totalReservations, linkedToChargebacks, flaggedGuests)
-GET    /api/reservations/:id              # Reservation detail with folio items and linked chargebacks
-GET    /api/reservations/:id/folio        # Guest folio with line items
-GET    /api/reservations/search/live      # Real-time PMS search
-POST   /api/reservations/:id/link-chargeback  # Manual chargeback linking
 ```
 
 ### 6.11 API Response Format
@@ -1015,10 +1015,10 @@ infrastructure/
 
 | Category | Count | Systems | Features |
 |----------|-------|---------|----------|
-| **Enterprise** | 15 | Oracle Opera Cloud, Mews, Cloudbeds, protel, StayNTouch, Apaleo, Maestro, SynXis, OPERA Cloud Simphony, Infor HMS, Galaxy Lightspeed, Visual Matrix, ResNexus, Hotelogix, eZee Absolute | Full two-way sync, evidence collection |
-| **Boutique/Independent** | 6 | AutoClerk, innRoad, WebRezPro, RoomMaster, Little Hotelier, RoomKeyPMS | Full two-way sync, evidence collection |
+| **Enterprise** | 15 | Oracle Opera Cloud, Mews, Cloudbeds, AutoClerk, Agilysys, Infor, Stayntouch, RoomKey, Maestro, Hotelogix, RMS Cloud, Protel, eZee, SIHOT, innRoad | Full two-way sync, evidence collection |
+| **Boutique/Independent** | 6 | Little Hotelier, Frontdesk Anywhere, WebRezPro, ThinkReservations, ResNexus, Guestline | Full two-way sync, evidence collection |
 | **Vacation Rental** | 4 | Guesty, Hostaway, Lodgify, Escapia | Rental agreements, damage deposits, guest verification |
-| **Brand-Specific** | 5 | Marriott FOSSE/MARSHA, Hilton OnQ, Hyatt OPERA, IHG Concerto, Best Western Central | Loyalty program integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards) |
+| **Brand-Specific** | 5 | Marriott GXP, Hilton OnQ, Hyatt Opera, IHG Concerto, Best Western | Loyalty program integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards) |
 
 ### 10.3 Dispute/Chargeback Portal Integrations (21 Adapters)
 
@@ -1520,8 +1520,8 @@ volumes:
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │                              ┌─────────────┐                                │
-│                              │ CloudFlare  │                                │
-│                              │     DNS     │                                │
+│                              │  Route 53 / │                                │
+│                              │ CloudFront  │                                │
 │                              └──────┬──────┘                                │
 │                                     │                                        │
 │                              ┌──────▼──────┐                                │
@@ -1611,7 +1611,7 @@ accudefend/
 │
 ├── backend/
 │   ├── config/
-│   │   ├── database.js                 # Prisma setup
+│   │   ├── database.js                 # Prisma setup (deferred Proxy pattern for Node.js v25 compatibility)
 │   │   ├── redis.js                    # Redis connection & sessions
 │   │   ├── s3.js                       # AWS S3 config
 │   │   └── storage.js                  # Storage abstraction
@@ -1700,7 +1700,7 @@ npm run dev
 | Field | Value |
 |-------|-------|
 | Author | AccuDefend Engineering |
-| Version | 1.0.0 |
+| Version | 2.0.0 |
 | Status | Production Ready |
 | Last Review | February 2026 |
 

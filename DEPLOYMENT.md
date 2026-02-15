@@ -34,7 +34,7 @@ AccuDefend supports multiple deployment environments with **51 two-way integrati
 
 For **Demo Mode**, only Node.js and Git are needed. Full deployment requires all tools below.
 
-- Node.js 20+ and npm 10+
+- Node.js 20+ or 25.5+ and npm 10+
 - Docker and Docker Compose v2 (local development and above)
 - AWS CLI v2 (configured) (cloud deployments)
 - PostgreSQL 16 client (local development and above)
@@ -105,6 +105,19 @@ npm run dev
 - **Frontend development** without backend infrastructure
 - **Sales demos** and stakeholder presentations
 - **CI testing** of UI components
+
+### Node.js v25 Compatibility
+
+AccuDefend is fully compatible with Node.js v25.5.0. Key adaptations:
+
+| Issue | Solution |
+|-------|----------|
+| `require('@prisma/client')` hangs on import | Deferred Proxy pattern in `database.js` — PrismaClient only loaded during `connectDatabase()` |
+| Multiple PrismaClient instances cause startup freeze | All files use shared instance from `config/database.js` |
+| `autoprefixer` PostCSS plugin incompatible | Removed from `postcss.config.js` (Tailwind handles prefixing) |
+| Startup time 124s+ with eager Prisma loading | Reduced to ~12s with deferred loading |
+
+If using Node.js v25, no additional configuration is needed — the system automatically adapts.
 
 ---
 
@@ -494,7 +507,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20'  # Also compatible with Node.js 25.5
       - run: cd backend && npm ci && npm test
       - run: cd frontend && npm ci && npm test
 
@@ -605,6 +618,15 @@ aws logs get-log-events \
 ```bash
 # Check ElastiCache endpoint
 aws elasticache describe-cache-clusters --cache-cluster-id accudefend-prod
+```
+
+**Issue: Backend hangs on startup (Node.js v25)**
+```bash
+# If using Node.js v25.5+, ensure no files create their own PrismaClient
+# All files should use: const { prisma } = require('../config/database');
+# The deferred proxy in database.js handles Node.js v25 compatibility automatically.
+# If startup exceeds 30 seconds, check for rogue PrismaClient instances:
+grep -r "new PrismaClient" backend/ --include="*.js" | grep -v node_modules | grep -v database.js
 ```
 
 ---

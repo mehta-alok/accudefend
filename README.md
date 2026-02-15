@@ -6,8 +6,8 @@
 
   *Protecting Hotel Revenue Through Intelligent Defense*
 
-  ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-  ![Node](https://img.shields.io/badge/node-20+-green)
+  ![Version](https://img.shields.io/badge/version-2.0.0-blue)
+  ![Node](https://img.shields.io/badge/node-20%2B%20%7C%2025.5-green)
   ![License](https://img.shields.io/badge/license-Proprietary-red)
 </div>
 
@@ -45,7 +45,7 @@
 │                                                                  │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
 │  │   Frontend   │    │   Backend    │    │   Database   │      │
-│  │   React 18   │◄──►│  Node.js 20  │◄──►│  PostgreSQL  │      │
+│  │   React 18   │◄──►│ Node.js 20+/25│◄──►│  PostgreSQL  │      │
 │  │   Tailwind   │    │   Express    │    │    Prisma    │      │
 │  │   Recharts   │    │   JWT Auth   │    │              │      │
 │  └──────────────┘    └──────┬───────┘    └──────────────┘      │
@@ -70,7 +70,7 @@
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 20+ (also compatible with Node.js 25.5)
 - Docker & Docker Compose
 - AWS Account (for S3)
 - Payment processor accounts (Stripe, etc.)
@@ -179,6 +179,7 @@ npm run dev
 | POST | `/api/auth/register` | Create user (Admin) |
 | POST | `/api/auth/refresh` | Refresh token |
 | POST | `/api/auth/logout` | Logout |
+| GET | `/api/auth/me` | Get current user |
 
 ### Cases
 | Method | Endpoint | Description |
@@ -219,6 +220,15 @@ npm run dev
 | GET | `/api/notifications` | List notifications |
 | PATCH | `/api/notifications/:id/read` | Mark as read |
 | POST | `/api/notifications/read-all` | Mark all as read |
+
+### Reservations
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/reservations` | List reservations |
+| GET | `/api/reservations/:id` | Get reservation details |
+| GET | `/api/reservations/search` | Search reservations |
+| GET | `/api/reservations/:id/folio` | Get guest folio |
+| POST | `/api/reservations/:id/link` | Link to chargeback case |
 
 ---
 
@@ -285,7 +295,7 @@ For lost cases eligible for arbitration, AccuDefend provides:
 ```env
 # Application
 NODE_ENV=production
-PORT=3000
+PORT=8000
 
 # Database
 DATABASE_URL=postgresql://user:pass@host:5432/db
@@ -351,7 +361,7 @@ AccuDefend includes a built-in **interactive tutorial** and **contextual help sy
 accudefend/
 ├── backend/
 │   ├── config/                # Database, Redis, S3 configuration
-│   │   ├── database.js        # Prisma client setup
+│   │   ├── database.js        # Prisma client with deferred proxy (Node.js v25 compatible)
 │   │   ├── redis.js           # Redis connection & session management
 │   │   ├── s3.js              # AWS S3 configuration
 │   │   └── storage.js         # Storage abstraction layer
@@ -372,6 +382,7 @@ accudefend/
 │   │   ├── disputes.js        # Dispute company management
 │   │   ├── notifications.js   # Notification panel & alerts
 │   │   ├── pms.js             # PMS system integration
+│   │   ├── reservations.js    # PMS reservation lookup & management
 │   │   └── webhooks.js        # Payment processor webhooks
 │   ├── services/              # Business logic
 │   │   ├── fraudDetection.js  # AI fraud analysis engine
@@ -392,13 +403,17 @@ accudefend/
 │   └── package.json
 ├── frontend/
 │   ├── src/
-│   │   ├── components/        # Reusable UI components
+│   │   ├── components/        # Reusable UI components (7 components)
 │   │   │   ├── Layout.jsx           # Main layout with sidebar & nav
 │   │   │   ├── Tutorial.jsx         # Tutorial & Help system
-│   │   │   └── NotificationPanel.jsx # Notification dropdown panel
+│   │   │   ├── NotificationPanel.jsx # Notification dropdown panel
+│   │   │   ├── OutcomeTab.jsx       # WON/LOST dispute outcome display
+│   │   │   ├── ArbitrationModal.jsx  # 3-step arbitration filing modal
+│   │   │   ├── ReservationViewer.jsx # Reservation detail viewer
+│   │   │   └── GuestFolioViewer.jsx  # Guest folio itemized viewer
 │   │   ├── hooks/             # React hooks
 │   │   │   └── useAuth.jsx    # Authentication context & state
-│   │   ├── pages/             # Page components (9 pages)
+│   │   ├── pages/             # Page components (10 pages)
 │   │   │   ├── Login.jsx              # Authentication
 │   │   │   ├── Dashboard.jsx          # Main dashboard with metrics
 │   │   │   ├── Cases.jsx              # Case list & management
@@ -407,6 +422,7 @@ accudefend/
 │   │   │   ├── Settings.jsx           # System configuration
 │   │   │   ├── PMSIntegration.jsx     # PMS integrations
 │   │   │   ├── DisputeIntegration.jsx # Dispute company integrations
+│   │   │   ├── Reservations.jsx         # PMS reservations management
 │   │   │   └── Tutorial.jsx           # Dedicated tutorial page
 │   │   └── utils/             # API client, helpers
 │   │       ├── api.js         # API client & formatting utilities
@@ -619,6 +635,9 @@ AccuDefend employs autonomous AI agents:
 | **Security Scanner** | Scans for vulnerabilities | Daily |
 | **Dispute Analyzer** | Analyzes chargeback cases | Event-driven |
 | **Evidence Processor** | Processes evidence documents | Event-driven |
+| **Documentation Agent** | Generates API documentation | Weekly |
+| **Test Generator** | Creates unit/integration tests | Event-driven |
+| **Performance Monitor** | Monitors system performance | Continuous |
 
 ---
 
@@ -656,6 +675,6 @@ For technical support, contact:
 
 <div align="center">
   <p><strong>AccuDefend</strong></p>
-  <p>AI-Powered Chargeback Defense Platform</p>
+  <p>AI-Powered Chargeback Defense Platform v2.0</p>
   <p>&copy; 2026 AccuDefend. All rights reserved.</p>
 </div>

@@ -1,7 +1,7 @@
 # AccuDefend MVP - Product Document
 
-**Version:** 4.0
-**Last Updated:** February 13, 2026
+**Version:** 5.0
+**Last Updated:** February 14, 2026
 **Status:** In Production
 **Document Owner:** Aalok Mehta
 
@@ -51,14 +51,15 @@ Hotels lose $5,000-$50,000+ annually to chargebacks due to:
 
 | Layer | Technology | Details |
 |-------|-----------|---------|
-| **Frontend** | React 18, Vite 5, Tailwind CSS 3 | 9 pages, 3 components |
-| **Backend** | Node.js 20, Express 4, Prisma 5 | 10 route files, 8 services |
+| **Frontend** | React 18, Vite 5, Tailwind CSS 3 | 10 pages, 7 components |
+| **Backend** | Node.js 20, Express 4, Prisma 5 | 10 route files, 8 services, 2 controllers |
+| | | *Also compatible with Node.js 25.5.0* |
 | **Database** | PostgreSQL 16 | Via Prisma ORM |
 | **Cache** | Redis 7 | Sessions, rate limiting |
 | **Storage** | AWS S3 | Evidence files with presigned URLs |
 | **Auth** | JWT | Access (15m) + Refresh (7d) tokens |
 | **Validation** | Zod 3 | Input validation schemas |
-| **Logging** | Console-based logger (Node v25.5 compatible) | Structured logging |
+| **Logging** | Winston 3.x | Structured logging |
 | **Infrastructure** | AWS (ECS Fargate, Aurora, ElastiCache, CloudFront) | Multi-region with Terraform IaC |
 | **DevOps** | Docker, Docker Compose, GitHub Actions | Production + Dev containers |
 
@@ -77,7 +78,7 @@ Hotels lose $5,000-$50,000+ annually to chargebacks due to:
 - Rate limiting: 100 req/15min general, 20 req/15min for auth
 
 **Supported Provider Categories (51 Total Integrations):**
-- **PMS Systems (30):** Enterprise (15): Oracle Opera Cloud, Mews, Cloudbeds, protel, Maestro, RoomMaster, Hotelogix, Shiji, Infor HMS, OPERA 5 (On-Prem), Lightspeed, Resort Manager, Clock PMS+, eZee, Visual Matrix | Boutique/Independent (6): StayNTouch, Apaleo, innRoad, WebRezPro, Little Hotelier, RoomKeyPMS | Vacation Rental (4): Guesty, Hostaway, Lodgify, Streamline | Brand-Specific (5): Marriott FOSSE/FSPMS, Hilton OnQ, IHG Concerto, Wyndham PMS, Choice Advantage
+- **PMS Systems (30):** Enterprise (15): Oracle Opera Cloud, Mews, Cloudbeds, AutoClerk, Agilysys, Infor, Stayntouch, RoomKey, Maestro, Hotelogix, RMS Cloud, Protel, eZee, SIHOT, innRoad | Boutique/Independent (6): Little Hotelier, Frontdesk Anywhere, WebRezPro, ThinkReservations, ResNexus, Guestline | Vacation Rental (4): Guesty, Hostaway, Lodgify, Escapia | Brand-Specific (5): Marriott GXP, Hilton OnQ, Hyatt Opera, IHG Concerto, Best Western
 - **Dispute/Chargeback Adapters (21):** Prevention (3): Verifi (Visa CDRN), Ethoca (Mastercard), RDR (Rapid Dispute Resolution) | Card Networks (4): Visa Resolve Online, Mastercard Connect, Amex GARN, Discover eDisputeLink | Merchant Processors (9): Stripe Disputes, Adyen Dispute Management, Shift4 Chargeback Manager, Elavon ChargebackOps, FIS/Worldpay, Global Payments, TSYS/TransFirst, Square Disputes, Toast | Third-Party (5): Chargebacks911 Portal, Chargeback Gurus, Midigator, SERTIFI, Merlink
 - **All adapters implement full two-way sync with webhooks**
 - **Brand-specific loyalty integration:** Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards
@@ -168,7 +169,7 @@ Weighted scoring model calculating confidence score (0-100):
 
 **Status:** Implemented
 
-**Frontend Pages (9 total):**
+**Frontend Pages (10 total):**
 
 | Page | Description |
 |------|-------------|
@@ -182,13 +183,17 @@ Weighted scoring model calculating confidence score (0-100):
 | Tutorial | Dedicated tutorial and help page |
 | Login | Authentication with provider selection |
 
-**Frontend Components:**
+**Frontend Components (7):**
 
 | Component | Description |
 |-----------|-------------|
 | Layout | Main layout with sidebar navigation |
 | Tutorial | Interactive onboarding, help button, help panel |
 | NotificationPanel | Real-time notification dropdown with alerts |
+| OutcomeTab | Resolution details for WON/LOST cases |
+| ArbitrationModal | 3-step arbitration filing workflow |
+| ReservationViewer | Reservation detail display with guest profile |
+| GuestFolioViewer | Guest folio breakdown with charges and payments |
 
 ### 7. Dispute & Chargeback Portal Integration
 
@@ -231,6 +236,9 @@ Weighted scoring model calculating confidence score (0-100):
 | Security Scanner | Scan for vulnerabilities | Daily |
 | Dispute Analyzer | Analyze chargeback cases | Event-driven |
 | Evidence Processor | Process evidence documents | Event-driven |
+| Documentation Agent | Generate and update documentation | Event-driven |
+| Test Generator | Create and maintain test suites | Event-driven |
+| Performance Monitor | Track system performance metrics | Continuous |
 
 ### 11. Interactive Tutorial & Help System
 
@@ -393,8 +401,8 @@ accudefend/
 │   └── server.js              # Entry point
 ├── frontend/
 │   ├── src/
-│   │   ├── components/        # Layout, Tutorial, NotificationPanel
-│   │   ├── pages/             # 9 page components
+│   │   ├── components/        # Layout, Tutorial, NotificationPanel, OutcomeTab, ArbitrationModal, ReservationViewer, GuestFolioViewer
+│   │   ├── pages/             # 10 page components
 │   │   ├── hooks/             # useAuth
 │   │   └── utils/             # api.js, helpers.js
 │   ├── Dockerfile
@@ -526,6 +534,7 @@ accudefend/
 | 3.0 | February 2026 | Expanded to 30 PMS systems (Enterprise, Boutique/Independent, Vacation Rental, Brand-Specific), 21 dispute/chargeback adapters with full two-way sync, 51 total integrations, brand-specific loyalty integration (Marriott Bonvoy, Hilton Honors, World of Hyatt, IHG One Rewards, Best Western Rewards) |
 | 4.0 | February 2026 | Added dispute outcome tracking (WON/LOST resolution data with win factors, denial codes, evidence gaps), arbitration workflow (3-step filing modal with evidence upload and narrative), OutcomeTab and ArbitrationModal components, auto-navigation to Outcome tab, resolution banners, new POST /api/cases/:id/arbitration endpoint |
 | 4.1 | February 2026 | Added reservations module: 4 new API endpoints (list, stats, detail, link-chargeback), 10 demo reservations across 4 PMS sources in demo mode, flattenReservation() normalization for frontend |
+| 5.0 | February 14, 2026 | Node.js v25 compatibility, standardized PMS/adapter names, 7 frontend components, 8 AI agents, deferred Prisma proxy |
 
 ---
 

@@ -39,5 +39,5 @@ coverage/
 *.tmp
 *.temp
 
-# Original .docx documents (md versions are tracked instead)
-*.docx
+# Generated .docx documentation (tracked alongside .md source files)
+# *.docx  -- now tracked; regenerated from .md via python-docx
