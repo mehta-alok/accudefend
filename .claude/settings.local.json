@@ -1,7 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(gh auth:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm install)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(lsof:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(npx prisma db seed)",
+      "Bash(docker-compose up:*)",
+      "Bash(psql:*)",
+      "Bash(docker info:*)",
+      "Bash(pg_isready:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

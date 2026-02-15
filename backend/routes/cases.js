@@ -955,6 +955,130 @@ router.post('/:id/analyze', requireRole('ADMIN', 'MANAGER', 'STAFF'), async (req
 });
 
 /**
+ * GET /api/cases/:id/notes
+ * Get all notes for a case
+ */
+router.get('/:id/notes', async (req, res) => {
+  try {
+    const existing = await prisma.chargeback.findFirst({
+      where: {
+        id: req.params.id,
+        ...req.propertyFilter
+      }
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Chargeback not found'
+      });
+    }
+
+    const notes = await prisma.caseNote.findMany({
+      where: { chargebackId: req.params.id },
+      include: {
+        user: { select: { firstName: true, lastName: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({ notes, total: notes.length });
+
+  } catch (error) {
+    // Demo mode fallback
+    logger.warn('Get notes: database unavailable, returning demo data');
+    const demoNotes = [
+      {
+        id: 'note-1',
+        chargebackId: req.params.id,
+        content: 'Guest ID verified against reservation records. Name and address match.',
+        isInternal: true,
+        user: { firstName: 'Admin', lastName: 'User' },
+        createdAt: new Date(Date.now() - 4 * 3600000).toISOString()
+      },
+      {
+        id: 'note-2',
+        chargebackId: req.params.id,
+        content: 'Key card logs retrieved from PMS — confirm stay for full duration.',
+        isInternal: true,
+        user: { firstName: 'Admin', lastName: 'User' },
+        createdAt: new Date(Date.now() - 2 * 3600000).toISOString()
+      }
+    ];
+    res.json({ notes: demoNotes, total: demoNotes.length, isDemo: true });
+  }
+});
+
+/**
+ * GET /api/cases/:id/timeline
+ * Get timeline events for a case
+ */
+router.get('/:id/timeline', async (req, res) => {
+  try {
+    const existing = await prisma.chargeback.findFirst({
+      where: {
+        id: req.params.id,
+        ...req.propertyFilter
+      }
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: 'Chargeback not found'
+      });
+    }
+
+    const timeline = await prisma.timelineEvent.findMany({
+      where: { chargebackId: req.params.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({ timeline, total: timeline.length });
+
+  } catch (error) {
+    // Demo mode fallback
+    logger.warn('Get timeline: database unavailable, returning demo data');
+    const now = Date.now();
+    const demoTimeline = [
+      {
+        id: 'tl-1',
+        chargebackId: req.params.id,
+        eventType: 'SYSTEM',
+        title: 'Case Created',
+        description: 'Chargeback received from payment processor and case auto-created.',
+        createdAt: new Date(now - 72 * 3600000).toISOString()
+      },
+      {
+        id: 'tl-2',
+        chargebackId: req.params.id,
+        eventType: 'AI_ANALYSIS',
+        title: 'AI Analysis Completed',
+        description: 'Confidence score calculated. Evidence collection initiated.',
+        createdAt: new Date(now - 70 * 3600000).toISOString()
+      },
+      {
+        id: 'tl-3',
+        chargebackId: req.params.id,
+        eventType: 'EVIDENCE',
+        title: 'Evidence Auto-Collected',
+        description: 'Registration card, guest ID, and folio retrieved from PMS.',
+        createdAt: new Date(now - 68 * 3600000).toISOString()
+      },
+      {
+        id: 'tl-4',
+        chargebackId: req.params.id,
+        eventType: 'STATUS_CHANGE',
+        title: 'Status Updated to In Review',
+        description: 'Case moved to manual review queue.',
+        createdAt: new Date(now - 24 * 3600000).toISOString()
+      }
+    ];
+    res.json({ timeline: demoTimeline, total: demoTimeline.length, isDemo: true });
+  }
+});
+
+/**
  * POST /api/cases/:id/notes
  * Add note to case
  */
